@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Bluetooth Keyboard</string>
+    <string name="play_pause">Play / Pause</string>
+    <string name="forward">İleri</string>
+    <string name="backward">Geri</string>
+    <string name="volume_up">Ses Aç</string>
+    <string name="volume_down">Ses Kapat</string>
+    <string name="fullscreen">Tam Ekran</string>
+    <string name="connect">Bağlan</string>
+    <string name="disconnect">Bağlantıyı Kes</string>
+    <string name="status_ready">Hazır - Cihaz seçin</string>
+    <string name="status_connected">Bağlı: %1$s</string>
+    <string name="status_connecting">Bağlanıyor…</string>
+    <string name="status_error">Hata: %1$s</string>
+    <string name="notification_title">Bluetooth Klavye Aktif</string>
+    <string name="notification_text">Uygulama çalışıyor</string>
+    <string name="bluetooth_permission_required">Bluetooth izni gerekli</string>
+    <string name="notification_permission_required">Bildirim izni gerekli</string>
+</resources>
+

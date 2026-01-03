@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background"
+    tools:context=".MainActivity">
+
+    <!-- Status Card -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/statusCard"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="24dp"
+        android:layout_marginEnd="20dp"
+        android:layout_marginBottom="20dp"
+        app:cardCornerRadius="16dp"
+        app:cardElevation="4dp"
+        app:cardBackgroundColor="@color/surface"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <TextView
+            android:id="@+id/statusText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:padding="20dp"
+            android:gravity="center"
+            android:text="@string/status_ready"
+            android:textColor="@color/text_primary"
+            android:textSize="16sp"
+            android:textStyle="bold" />
+    </androidx.cardview.widget.CardView>
+
+    <!-- Connect/Disconnect Button -->
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/connectButton"
+        style="@style/PrimaryButton"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="20dp"
+        android:layout_marginEnd="20dp"
+        android:layout_marginBottom="24dp"
+        android:background="@drawable/button_primary"
+        android:text="@string/connect"
+        android:textColor="@color/white"
+        android:textSize="18sp"
+        android:textStyle="bold"
+        app:cornerRadius="12dp"
+        app:elevation="6dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/statusCard" />
+
+    <!-- Control Buttons Grid -->
+    <GridLayout
+        android:id="@+id/controlGrid"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:columnCount="2"
+        android:rowCount="3"
+        android:alignmentMode="alignMargins"
+        android:useDefaultMargins="false"
+        android:columnOrderPreserved="false"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:paddingBottom="12dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/connectButton">
+
+        <!-- Play/Pause Button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/playPauseButton"
+            android:layout_width="0dp"
+            android:layout_height="140dp"
+            android:layout_columnWeight="2"
+            android:layout_margin="10dp"
+            android:background="@drawable/button_control_accent"
+            android:text="@string/play_pause"
+            android:textColor="@color/white"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:enabled="false"
+            app:cornerRadius="16dp"
+            app:elevation="4dp" />
+
+        <!-- Forward Button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/forwardButton"
+            android:layout_width="0dp"
+            android:layout_height="140dp"
+            android:layout_columnWeight="1"
+            android:layout_margin="10dp"
+            android:background="@drawable/button_control_enabled"
+            android:text="@string/forward"
+            android:textColor="@color/white"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:enabled="false"
+            app:cornerRadius="16dp"
+            app:elevation="4dp" />
+
+        <!-- Backward Button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/backwardButton"
+            android:layout_width="0dp"
+            android:layout_height="140dp"
+            android:layout_columnWeight="1"
+            android:layout_margin="10dp"
+            android:background="@drawable/button_control_enabled"
+            android:text="@string/backward"
+            android:textColor="@color/white"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:enabled="false"
+            app:cornerRadius="16dp"
+            app:elevation="4dp" />
+
+        <!-- Volume Up Button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/volumeUpButton"
+            android:layout_width="0dp"
+            android:layout_height="140dp"
+            android:layout_columnWeight="1"
+            android:layout_margin="10dp"
+            android:background="@drawable/button_control_enabled"
+            android:text="@string/volume_up"
+            android:textColor="@color/white"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:enabled="false"
+            app:cornerRadius="16dp"
+            app:elevation="4dp" />
+
+        <!-- Volume Down Button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/volumeDownButton"
+            android:layout_width="0dp"
+            android:layout_height="140dp"
+            android:layout_columnWeight="1"
+            android:layout_margin="10dp"
+            android:background="@drawable/button_control_enabled"
+            android:text="@string/volume_down"
+            android:textColor="@color/white"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:enabled="false"
+            app:cornerRadius="16dp"
+            app:elevation="4dp" />
+
+        <!-- Fullscreen Button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/fullscreenButton"
+            android:layout_width="0dp"
+            android:layout_height="140dp"
+            android:layout_columnWeight="2"
+            android:layout_margin="10dp"
+            android:background="@drawable/button_control_accent"
+            android:text="@string/fullscreen"
+            android:textColor="@color/white"
+            android:textSize="22sp"
+            android:textStyle="bold"
+            android:enabled="false"
+            app:cornerRadius="16dp"
+            app:elevation="4dp" />
+
+    </GridLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
+
