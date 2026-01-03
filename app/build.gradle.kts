@@ -9,7 +9,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.bluetoothkeyboard"
-        minSdk = 33  // Required for BluetoothHidDeviceAppSdpSettings API
+        minSdk = 28  // BluetoothHidDevice API requires Android 9 (API 28)
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
@@ -44,6 +44,7 @@ dependencies {
     implementation("com.google.android.material:material:1.11.0")
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2")
-    implementation("androidx.cardview:cardview:1.0.0")
+    implementation("androidx.recyclerview:recyclerview:1.3.2")
+    implementation("androidx.media:media:1.7.0")
 }
 

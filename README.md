@@ -1,19 +1,21 @@
-# PController - Bluetooth HID Klavye
+# Bluetooth HID Remote Control
 
-Android telefonunuzu Bluetooth HID (Human Interface Device) klavye olarak kullanın. PC'nizde film izlerken uzaktan kumanda olarak kullanabilirsiniz. YouTube, Netflix, HBO Max ve diğer tüm medya platformlarında çalışır!
+Android telefonunuzu Bluetooth HID (Human Interface Device) klavye olarak kullanın. Windows PC'nizde basit bir uzaktan kumanda olarak çalışır.
 
 ## 🎮 Özellikler
 
-## Özellikler
+- **Ok Tuşları**: Yukarı, Aşağı, Sol, Sağ
+- **Enter Tuşu**: Enter/Return tuşu
+- **Basit Arayüz**: D-Pad düzeni ile kolay kullanım
+- **Manuel Bağlantı**: Kullanıcı kontrolünde bağlantı
 
-- **Play/Pause**: Boşluk tuşu
-- **İleri**: Sağ ok tuşu
-- **Geri**: Sol ok tuşu
-- **Ses Aç**: Yukarı ok tuşu
-- **Ses Kapat**: Aşağı ok tuşu
-- **Tam Ekran**: F tuşu
+## 📋 Gereksinimler
 
-## Gereksinimler
+- **Android**: 9.0 (API 28) veya üzeri
+- **Windows PC**: Bluetooth desteği olan herhangi bir Windows bilgisayar
+- **PC Yazılımı**: Gerekmez! Windows'un yerleşik Bluetooth HID desteği kullanılır
+
+## 🔧 Kurulum
 
 ### Android Studio Kurulumu
 
@@ -29,49 +31,24 @@ Android telefonunuzu Bluetooth HID (Human Interface Device) klavye olarak kullan
      - ✅ Android SDK Platform 34
      - ✅ Android SDK Build-Tools
      - ✅ Android SDK Platform-Tools
-     - ✅ Android Emulator
-     - ✅ Intel x86 Emulator Accelerator (HAXM installer) - eğer Intel işlemci kullanıyorsanız
 
-3. **Gradle Senkronizasyonu**
-   - Projeyi açtıktan sonra Android Studio otomatik olarak Gradle dosyalarını indirecektir
-   - İlk açılışta biraz zaman alabilir (5-10 dakika)
+3. **Projeyi Açın**
+   - Android Studio'da `File` → `Open`
+   - Proje klasörünü seçin
+   - Gradle senkronizasyonunun tamamlanmasını bekleyin
 
-## Projeyi Açma
+### APK Oluşturma
 
-1. Android Studio'yu açın
-2. `File` → `Open`
-3. `geri-sar` klasörünü seçin
-4. "Trust Project" butonuna tıklayın
-5. Gradle senkronizasyonunun tamamlanmasını bekleyin
+1. **Release APK Oluşturma**
+   - `Build` → `Build Bundle(s) / APK(s)` → `Build APK(s)`
+   - Build tamamlandığında `app/build/outputs/apk/release/app-release.apk` dosyası oluşur
 
-## Fiziksel Cihaza Yükleme
+2. **APK'yı Telefona Yükleme**
+   - APK dosyasını telefonunuza kopyalayın
+   - Telefonda `Ayarlar` → `Güvenlik` → `Bilinmeyen Kaynaklardan Yükleme` seçeneğini açın
+   - APK dosyasına tıklayarak yükleyin
 
-### 1. Geliştirici Seçeneklerini Aktifleştirme
-
-1. Telefonunuzda `Ayarlar` → `Telefon Hakkında` (veya `Cihaz Hakkında`)
-2. `Yapı Numarası` (Build Number) seçeneğini **7 kez** üst üste tıklayın
-3. "Geliştirici oldunuz!" mesajını göreceksiniz
-
-### 2. USB Hata Ayıklamayı Aktifleştirme
-
-1. `Ayarlar` → `Geliştirici Seçenekleri`
-2. `USB Hata Ayıklama` seçeneğini **AÇIK** yapın
-3. Onay penceresinde "Tamam" deyin
-
-### 3. Telefonu Bilgisayara Bağlama
-
-1. USB kablosu ile telefonu bilgisayara bağlayın
-2. Telefonda "USB hata ayıklamaya izin ver" bildirimine **İzin Ver** deyin
-3. Android Studio'da telefonunuzun göründüğünü kontrol edin (üstteki cihaz seçici)
-
-### 4. Uygulamayı Çalıştırma
-
-1. Android Studio'da yeşil ▶️ (Run) butonuna tıklayın
-2. Veya `Run` → `Run 'app'` menüsünü kullanın
-3. Cihaz seçim penceresinde telefonunuzu seçin
-4. Uygulama telefonunuza yüklenecek ve otomatik olarak açılacak
-
-## Windows PC ile Eşleştirme
+## 🔌 Windows PC ile Eşleştirme
 
 ### 1. Windows'ta Bluetooth Ayarları
 
@@ -91,36 +68,34 @@ Android telefonunuzu Bluetooth HID (Human Interface Device) klavye olarak kullan
 ### 3. Uygulamada Bağlanma
 
 1. Uygulamayı açın
-2. "Bağlan" butonuna tıklayın
-3. Açılan listeden bilgisayarınızı seçin
-4. Bağlantı kurulduğunda durum "Bağlı: [Cihaz Adı]" olarak değişecek
-5. Artık butonlar aktif olacak ve kullanılabilir
+2. **"Tara"** butonuna tıklayın - yakındaki Bluetooth cihazları taranacak
+3. Listeden bilgisayarınızı seçin
+4. **"Bağlan"** butonuna tıklayın
+5. Bağlantı kurulduğunda durum "Bağlı: [Cihaz Adı]" olarak değişecek
+6. Artık D-Pad butonları aktif olacak ve kullanılabilir
 
-## Test Etme
+## 🎯 Kullanım
 
-### VLC Media Player ile Test
+### Bağlantı Akışı
 
-1. VLC'de bir video açın
-2. Uygulamadaki butonları test edin:
-   - **Play/Pause**: Videoyu duraklatır/devam ettirir
-   - **İleri/Geri**: 10 saniye ileri/geri atlar
-   - **Ses Aç/Kapat**: Ses seviyesini ayarlar
-   - **Tam Ekran**: Tam ekran moduna geçer
+1. **Cihaz Seçimi**: "Tara" butonuna tıklayın ve listeden PC'nizi seçin
+2. **Bağlantı**: "Bağlan" butonuna tıklayın
+3. **Girdi Ekranı**: Bağlantı başarılı olduğunda D-Pad ekranı görünecek
+4. **Bağlantıyı Kesme**: "Bağlantıyı Kes" butonuna tıklayarak bağlantıyı sonlandırın
 
-### YouTube (Tarayıcı) ile Test
+### Tuşlar
 
-1. YouTube'da bir video açın
-2. Butonları test edin:
-   - **Play/Pause**: Video oynatmayı kontrol eder
-   - **İleri/Geri**: Video zaman çizelgesinde ileri/geri gider
-   - **Ses Aç/Kapat**: Tarayıcı ses seviyesini ayarlar
-   - **Tam Ekran**: YouTube tam ekran moduna geçer
+- **UP**: Yukarı ok tuşu
+- **DOWN**: Aşağı ok tuşu
+- **LEFT**: Sol ok tuşu
+- **RIGHT**: Sağ ok tuşu
+- **ENTER**: Enter/Return tuşu
 
-## Sorun Giderme
+## 🐛 Sorun Giderme
 
 ### Bluetooth Bağlantısı Kurulmuyor
 
-**Sorun**: Uygulamada "Bağlantı başarısız" hatası alıyorum.
+**Sorun**: "Bağlantı başarısız" hatası alıyorum.
 
 **Çözümler**:
 1. **Bluetooth'u kapatıp açın**: Hem telefonda hem PC'de
@@ -129,7 +104,7 @@ Android telefonunuzu Bluetooth HID (Human Interface Device) klavye olarak kullan
    - Telefonda eşleştirmeyi silin
    - Tekrar eşleştirin
 3. **Uygulamayı yeniden başlatın**: Uygulamayı tamamen kapatıp tekrar açın
-4. **Servisi yeniden başlatın**: Uygulamada "Bağlantıyı Kes" sonra tekrar "Bağlan"
+4. **"Tekrar Dene" butonunu kullanın**: Bağlantı ekranında "Tekrar Dene" butonuna tıklayın
 
 ### İzinler Sorunu
 
@@ -151,16 +126,15 @@ Android telefonunuzu Bluetooth HID (Human Interface Device) klavye olarak kullan
 3. **PC'yi yeniden başlatın**: Bazen Windows Bluetooth stack'i yeniden başlatmak gerekir
 4. **Başka bir uygulamada test edin**: Not Defteri'nde tuşların çalışıp çalışmadığını kontrol edin
 
-### Android Studio Proje Açılmıyor
+### Cihaz Listesinde Görünmüyor
 
-**Sorun**: Gradle senkronizasyon hatası alıyorum.
+**Sorun**: "Tara" butonuna tıkladığımda PC'm görünmüyor.
 
 **Çözümler**:
-1. **İnternet bağlantınızı kontrol edin**: Gradle dosyalarını indirmek için internet gerekli
-2. **Gradle'ı manuel senkronize edin**: `File` → `Sync Project with Gradle Files`
-3. **Gradle cache'i temizleyin**: 
-   - `File` → `Invalidate Caches / Restart`
-   - "Invalidate and Restart" seçeneğini seçin
+1. **PC'de Bluetooth'un açık olduğundan emin olun**
+2. **PC'yi "eşleştirilebilir" yapın**: Windows Bluetooth ayarlarında "Bluetooth veya diğer cihaz ekle" modunda olun
+3. **Taramayı tekrar deneyin**: "Tara" butonuna tekrar tıklayın
+4. **Manuel eşleştirme yapın**: Önce Windows ve Android'de manuel olarak eşleştirin, sonra uygulamada bağlanın
 
 ### Minimum SDK Hatası
 
@@ -171,15 +145,16 @@ Android telefonunuzu Bluetooth HID (Human Interface Device) klavye olarak kullan
 - Telefonunuzun Android sürümünü kontrol edin: `Ayarlar` → `Telefon Hakkında` → `Android Sürümü`
 - Android 9'dan eski bir cihaz kullanıyorsanız, proje çalışmayacaktır
 
-## Teknik Detaylar
+## 📱 Teknik Detaylar
 
 - **Minimum SDK**: API 28 (Android 9.0)
 - **Target SDK**: API 34 (Android 14)
 - **Dil**: Kotlin
 - **Bluetooth Profili**: HID Device (Human Interface Device)
 - **Servis Tipi**: Foreground Service (arka planda çalışma için)
+- **Mimari**: Tek aktivite, basit UI
 
-## Önemli Notlar
+## ⚠️ Önemli Notlar
 
 ⚠️ **PC'de Yazılım Gerektirmez**: Bu uygulama, PC'nizde herhangi bir yazılım kurulumu gerektirmez. Windows'un yerleşik Bluetooth HID desteği kullanılır.
 
@@ -187,11 +162,13 @@ Android telefonunuzu Bluetooth HID (Human Interface Device) klavye olarak kullan
 
 ⚠️ **Güvenlik**: Bu uygulama, bağlı olduğu cihaza klavye tuşları gönderebilir. Sadece güvendiğiniz cihazlarla eşleştirin.
 
-## Lisans
+⚠️ **Manuel Bağlantı**: Uygulama otomatik bağlanmaz. Her seferinde kullanıcı "Bağlan" butonuna tıklamalıdır.
+
+## 📄 Lisans
 
 Bu proje eğitim amaçlıdır ve özgürce kullanılabilir.
 
-## Destek
+## 🆘 Destek
 
 Sorun yaşarsanız:
 1. Yukarıdaki "Sorun Giderme" bölümünü kontrol edin
@@ -200,5 +177,4 @@ Sorun yaşarsanız:
 
 ---
 
-**İyi kullanımlar! 🎬📱**
-
+**İyi kullanımlar! 🎮📱**

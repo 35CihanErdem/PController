@@ -7,169 +7,201 @@
     android:background="@color/background"
     tools:context=".MainActivity">
 
-    <!-- Status Card -->
-    <androidx.cardview.widget.CardView
-        android:id="@+id/statusCard"
+    <!-- Status Text -->
+    <TextView
+        android:id="@+id/statusText"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="20dp"
         android:layout_marginTop="24dp"
         android:layout_marginEnd="20dp"
-        android:layout_marginBottom="20dp"
-        app:cardCornerRadius="16dp"
-        app:cardElevation="4dp"
-        app:cardBackgroundColor="@color/surface"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
-
-        <TextView
-            android:id="@+id/statusText"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:padding="20dp"
-            android:gravity="center"
-            android:text="@string/status_ready"
-            android:textColor="@color/text_primary"
-            android:textSize="16sp"
-            android:textStyle="bold" />
-    </androidx.cardview.widget.CardView>
-
-    <!-- Connect/Disconnect Button -->
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/connectButton"
-        style="@style/PrimaryButton"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginStart="20dp"
-        android:layout_marginEnd="20dp"
-        android:layout_marginBottom="24dp"
-        android:background="@drawable/button_primary"
-        android:text="@string/connect"
-        android:textColor="@color/white"
+        android:gravity="center"
+        android:text="Bağlantı yok"
+        android:textColor="@color/text_primary"
         android:textSize="18sp"
         android:textStyle="bold"
-        app:cornerRadius="12dp"
-        app:elevation="6dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/statusCard" />
+        app:layout_constraintTop_toTopOf="parent" />
 
-    <!-- Control Buttons Grid -->
-    <GridLayout
-        android:id="@+id/controlGrid"
+    <!-- Device Selection Screen -->
+    <LinearLayout
+        android:id="@+id/deviceSelectionContainer"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:columnCount="2"
-        android:rowCount="3"
-        android:alignmentMode="alignMargins"
-        android:useDefaultMargins="false"
-        android:columnOrderPreserved="false"
-        android:paddingStart="12dp"
-        android:paddingEnd="12dp"
-        android:paddingBottom="12dp"
+        android:orientation="vertical"
+        android:padding="20dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/connectButton">
+        app:layout_constraintTop_toBottomOf="@id/statusText">
 
-        <!-- Play/Pause Button -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/playPauseButton"
-            android:layout_width="0dp"
-            android:layout_height="140dp"
-            android:layout_columnWeight="2"
-            android:layout_margin="10dp"
-            android:background="@drawable/button_control_accent"
-            android:text="@string/play_pause"
-            android:textColor="@color/white"
-            android:textSize="22sp"
-            android:textStyle="bold"
-            android:enabled="false"
-            app:cornerRadius="16dp"
-            app:elevation="4dp" />
+        <Button
+            android:id="@+id/scanButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Tara"
+            android:textSize="16sp" />
 
-        <!-- Forward Button -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/forwardButton"
-            android:layout_width="0dp"
-            android:layout_height="140dp"
-            android:layout_columnWeight="1"
-            android:layout_margin="10dp"
-            android:background="@drawable/button_control_enabled"
-            android:text="@string/forward"
-            android:textColor="@color/white"
+        <ProgressBar
+            android:id="@+id/progressBar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginTop="16dp"
+            android:visibility="gone" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/deviceListRecyclerView"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginTop="16dp"
+            android:layout_weight="1" />
+
+    </LinearLayout>
+
+    <!-- Connection Screen -->
+    <LinearLayout
+        android:id="@+id/connectionContainer"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/statusText">
+
+        <Button
+            android:id="@+id/connectButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Bağlan"
+            android:textSize="18sp" />
+
+        <Button
+            android:id="@+id/retryButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="Tekrar Dene"
             android:textSize="18sp"
-            android:textStyle="bold"
-            android:enabled="false"
-            app:cornerRadius="16dp"
-            app:elevation="4dp" />
+            android:visibility="gone" />
 
-        <!-- Backward Button -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/backwardButton"
-            android:layout_width="0dp"
-            android:layout_height="140dp"
-            android:layout_columnWeight="1"
-            android:layout_margin="10dp"
-            android:background="@drawable/button_control_enabled"
-            android:text="@string/backward"
-            android:textColor="@color/white"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:enabled="false"
-            app:cornerRadius="16dp"
-            app:elevation="4dp" />
+        <ProgressBar
+            android:id="@+id/connectionProgressBar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:layout_marginTop="16dp"
+            android:visibility="gone" />
 
-        <!-- Volume Up Button -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/volumeUpButton"
-            android:layout_width="0dp"
-            android:layout_height="140dp"
-            android:layout_columnWeight="1"
-            android:layout_margin="10dp"
-            android:background="@drawable/button_control_enabled"
-            android:text="@string/volume_up"
-            android:textColor="@color/white"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:enabled="false"
-            app:cornerRadius="16dp"
-            app:elevation="4dp" />
+    </LinearLayout>
 
-        <!-- Volume Down Button -->
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/volumeDownButton"
-            android:layout_width="0dp"
-            android:layout_height="140dp"
-            android:layout_columnWeight="1"
-            android:layout_margin="10dp"
-            android:background="@drawable/button_control_enabled"
-            android:text="@string/volume_down"
-            android:textColor="@color/white"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:enabled="false"
-            app:cornerRadius="16dp"
-            app:elevation="4dp" />
+    <!-- Input Screen (D-Pad + Enter) -->
+    <LinearLayout
+        android:id="@+id/inputContainer"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:padding="20dp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/statusText">
 
-        <!-- Fullscreen Button -->
-        <com.google.android.material.button.MaterialButton
+        <!-- D-Pad -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="center">
+
+            <!-- UP Button -->
+            <Button
+                android:id="@+id/upButton"
+                android:layout_width="120dp"
+                android:layout_height="80dp"
+                android:text="UP"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:enabled="false" />
+
+            <!-- LEFT and RIGHT Buttons -->
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/leftButton"
+                    android:layout_width="120dp"
+                    android:layout_height="80dp"
+                    android:layout_marginEnd="8dp"
+                    android:text="LEFT"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:enabled="false" />
+
+                <Button
+                    android:id="@+id/rightButton"
+                    android:layout_width="120dp"
+                    android:layout_height="80dp"
+                    android:layout_marginStart="8dp"
+                    android:text="RIGHT"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:enabled="false" />
+
+            </LinearLayout>
+
+            <!-- DOWN Button -->
+            <Button
+                android:id="@+id/downButton"
+                android:layout_width="120dp"
+                android:layout_height="80dp"
+                android:layout_marginTop="8dp"
+                android:text="DOWN"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:enabled="false" />
+
+        </LinearLayout>
+
+        <!-- SPACE Button -->
+        <Button
+            android:id="@+id/enterButton"
+            android:layout_width="match_parent"
+            android:layout_height="100dp"
+            android:layout_marginTop="32dp"
+            android:text="SPACE"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:enabled="false" />
+
+        <!-- F (Fullscreen) Button -->
+        <Button
             android:id="@+id/fullscreenButton"
-            android:layout_width="0dp"
-            android:layout_height="140dp"
-            android:layout_columnWeight="2"
-            android:layout_margin="10dp"
-            android:background="@drawable/button_control_accent"
-            android:text="@string/fullscreen"
-            android:textColor="@color/white"
-            android:textSize="22sp"
+            android:layout_width="match_parent"
+            android:layout_height="80dp"
+            android:layout_marginTop="16dp"
+            android:text="F (Tam Ekran)"
+            android:textSize="20sp"
             android:textStyle="bold"
-            android:enabled="false"
-            app:cornerRadius="16dp"
-            app:elevation="4dp" />
+            android:enabled="false" />
 
-    </GridLayout>
+        <!-- Disconnect Button -->
+        <Button
+            android:id="@+id/disconnectButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="24dp"
+            android:text="Bağlantıyı Kes"
+            android:textSize="16sp" />
+
+    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
-

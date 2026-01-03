@@ -1,11 +1,11 @@
 package com.example.bluetoothkeyboard
 
+import android.Manifest
 import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
-import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothHidDevice
 import android.bluetooth.BluetoothHidDeviceAppSdpSettings
@@ -13,12 +13,14 @@ import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothProfile
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Handler
 import android.os.IBinder
 import android.os.Looper
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
 
 class BluetoothHidService : Service() {
     
@@ -73,20 +75,6 @@ class BluetoothHidService : Service() {
             // Bytes 2-7 are already 0x00 (no keys pressed)
             
             when (keyCode) {
-                KeyCode.SPACE -> {
-                    report[2] = 0x2C.toByte() // Space key (HID Usage ID 0x2C)
-                    Log.d(TAG, "Creating report for SPACE (0x2C)")
-                }
-                KeyCode.LEFT_ARROW -> {
-                    // Left Arrow - HID Usage ID 0x50 from Keyboard Usage Page
-                    report[2] = 0x50.toByte()
-                    Log.d(TAG, "Creating report for LEFT_ARROW (0x50)")
-                }
-                KeyCode.RIGHT_ARROW -> {
-                    // Right Arrow - HID Usage ID 0x4F
-                    report[2] = 0x4F.toByte()
-                    Log.d(TAG, "Creating report for RIGHT_ARROW (0x4F)")
-                }
                 KeyCode.UP_ARROW -> {
                     // Up Arrow - HID Usage ID 0x52
                     report[2] = 0x52.toByte()
@@ -97,8 +85,23 @@ class BluetoothHidService : Service() {
                     report[2] = 0x51.toByte()
                     Log.d(TAG, "Creating report for DOWN_ARROW (0x51)")
                 }
+                KeyCode.LEFT_ARROW -> {
+                    // Left Arrow - HID Usage ID 0x50
+                    report[2] = 0x50.toByte()
+                    Log.d(TAG, "Creating report for LEFT_ARROW (0x50)")
+                }
+                KeyCode.RIGHT_ARROW -> {
+                    // Right Arrow - HID Usage ID 0x4F
+                    report[2] = 0x4F.toByte()
+                    Log.d(TAG, "Creating report for RIGHT_ARROW (0x4F)")
+                }
+                KeyCode.SPACE -> {
+                    // Space key - HID Usage ID 0x2C
+                    report[2] = 0x2C.toByte()
+                    Log.d(TAG, "Creating report for SPACE (0x2C)")
+                }
                 KeyCode.F -> {
-                    // F key - HID Usage ID 0x09
+                    // F key - HID Usage ID 0x09 (Fullscreen toggle)
                     report[2] = 0x09.toByte()
                     Log.d(TAG, "Creating report for F (0x09)")
                 }
@@ -142,16 +145,65 @@ class BluetoothHidService : Service() {
         }
         
         override fun onConnectionStateChanged(device: BluetoothDevice?, state: Int) {
-            Log.d(TAG, "Connection state changed: ${device?.address} state=$state")
+            val deviceAddress = try {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    if (ContextCompat.checkSelfPermission(
+                            this@BluetoothHidService,
+                            Manifest.permission.BLUETOOTH_CONNECT
+                        ) == PackageManager.PERMISSION_GRANTED
+                    ) {
+                        device?.address ?: "Unknown"
+                    } else {
+                        "Unknown (no permission)"
+                    }
+                } else {
+                    device?.address ?: "Unknown"
+                }
+            } catch (e: SecurityException) {
+                "Unknown (security exception)"
+            }
+            Log.d(TAG, "Connection state changed: $deviceAddress state=$state")
             when (state) {
                 BluetoothProfile.STATE_CONNECTED -> {
                     connectedDevice = device
-                    Log.d(TAG, "Connected to ${device?.name}")
+                    val deviceName = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                        if (ContextCompat.checkSelfPermission(
+                                this@BluetoothHidService,
+                                Manifest.permission.BLUETOOTH_CONNECT
+                            ) == PackageManager.PERMISSION_GRANTED
+                        ) {
+                            device?.name ?: device?.address ?: "Bilinmeyen"
+                        } else {
+                            device?.address ?: "Bilinmeyen"
+                        }
+                    } else {
+                        device?.name ?: device?.address ?: "Bilinmeyen"
+                    }
+                    Log.d(TAG, "Connected to $deviceName")
+                    // Update notification when connected
+                    val notificationManager = this@BluetoothHidService.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                    notificationManager.notify(NOTIFICATION_ID, this@BluetoothHidService.createNotification())
                 }
                 BluetoothProfile.STATE_DISCONNECTED -> {
                     if (connectedDevice == device) {
+                        val deviceName = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                            if (ContextCompat.checkSelfPermission(
+                                    this@BluetoothHidService,
+                                    Manifest.permission.BLUETOOTH_CONNECT
+                                ) == PackageManager.PERMISSION_GRANTED
+                            ) {
+                                device?.name ?: device?.address ?: "Bilinmeyen"
+                            } else {
+                                device?.address ?: "Bilinmeyen"
+                            }
+                        } else {
+                            device?.name ?: device?.address ?: "Bilinmeyen"
+                        }
+                        Log.d(TAG, "Disconnected from $deviceName")
                         connectedDevice = null
-                        Log.d(TAG, "Disconnected from ${device?.name}")
+                        // Update notification when disconnected
+                        val notificationManager = this@BluetoothHidService.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+                        notificationManager.notify(NOTIFICATION_ID, this@BluetoothHidService.createNotification())
                     }
                 }
             }
@@ -192,14 +244,21 @@ class BluetoothHidService : Service() {
     override fun onCreate() {
         super.onCreate()
         createNotificationChannel()
+        // Delete old channel and recreate if needed (for testing)
+        val notificationManager = getSystemService(NotificationManager::class.java)
+        try {
+            notificationManager.deleteNotificationChannel(NOTIFICATION_CHANNEL_ID)
+        } catch (e: Exception) {
+            // Ignore
+        }
+        createNotificationChannel()
+        
         startForeground(NOTIFICATION_ID, createNotification())
         
         val bluetoothManager = getSystemService(Context.BLUETOOTH_SERVICE) as BluetoothManager
         val adapter = bluetoothManager.adapter
         
-        if (adapter != null) {
-            adapter.getProfileProxy(this, hidProfileListener, BluetoothProfile.HID_DEVICE)
-        }
+        adapter?.getProfileProxy(this, hidProfileListener, BluetoothProfile.HID_DEVICE)
     }
     
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
@@ -214,6 +273,22 @@ class BluetoothHidService : Service() {
                 disconnect()
                 stopSelf()
             }
+            "ACTION_LEFT" -> {
+                sendKey(KeyCode.LEFT_ARROW)
+            }
+            "ACTION_RIGHT" -> {
+                sendKey(KeyCode.RIGHT_ARROW)
+            }
+            "ACTION_UP" -> {
+                sendKey(KeyCode.UP_ARROW)
+            }
+            "ACTION_DOWN" -> {
+                sendKey(KeyCode.DOWN_ARROW)
+            }
+        }
+        // Update notification after action
+        if (intent?.action?.startsWith("ACTION_") == true) {
+            startForeground(NOTIFICATION_ID, createNotification())
         }
         return START_STICKY
     }
@@ -283,13 +358,33 @@ class BluetoothHidService : Service() {
                 descriptor
             )
             
-            val result = device.registerApp(
-                sdpSettings,
-                null, // In QOS - use default
-                null, // Out QOS - use default
-                mainExecutor,
-                hidHostCallback
-            )
+            // Check permission for Android 12+ (registerApp requires BLUETOOTH_CONNECT)
+            val hasPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.BLUETOOTH_CONNECT
+                ) == PackageManager.PERMISSION_GRANTED
+            } else {
+                true
+            }
+            
+            if (!hasPermission) {
+                Log.e(TAG, "BLUETOOTH_CONNECT permission not granted for registerApp")
+                return
+            }
+            
+            val result = try {
+                device.registerApp(
+                    sdpSettings,
+                    null, // In QOS - use default
+                    null, // Out QOS - use default
+                    mainExecutor,
+                    hidHostCallback
+                )
+            } catch (e: SecurityException) {
+                Log.e(TAG, "SecurityException registering HID device", e)
+                return
+            }
             
             Log.d(TAG, "HID device registration result: $result")
         }
@@ -304,16 +399,36 @@ class BluetoothHidService : Service() {
             return
         }
         
-        val device = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            adapter.getRemoteDevice(deviceAddress)
-        } else {
-            @Suppress("DEPRECATION")
-            adapter.getRemoteDevice(deviceAddress)
+        // Check permission for Android 12+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            if (ContextCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.BLUETOOTH_CONNECT
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                Log.e(TAG, "BLUETOOTH_CONNECT permission not granted")
+                return
+            }
+        }
+        
+        val device = try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                adapter.getRemoteDevice(deviceAddress)
+            } else {
+                adapter.getRemoteDevice(deviceAddress)
+            }
+        } catch (e: SecurityException) {
+            Log.e(TAG, "SecurityException getting remote device", e)
+            return
         }
         
         if (isServiceConnected && hidDevice != null) {
-            val connected = hidDevice!!.connect(device)
-            Log.d(TAG, "Connection attempt result: $connected")
+            try {
+                val connected = hidDevice!!.connect(device)
+                Log.d(TAG, "Connection attempt result: $connected")
+            } catch (e: SecurityException) {
+                Log.e(TAG, "SecurityException connecting to device", e)
+            }
         } else {
             Log.e(TAG, "HID service not ready")
         }
@@ -321,22 +436,42 @@ class BluetoothHidService : Service() {
     
     private fun disconnect() {
         connectedDevice?.let { device ->
-            hidDevice?.disconnect(device)
+            // Check permission for Android 12+
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                if (ContextCompat.checkSelfPermission(
+                        this,
+                        Manifest.permission.BLUETOOTH_CONNECT
+                    ) != PackageManager.PERMISSION_GRANTED
+                ) {
+                    Log.e(TAG, "BLUETOOTH_CONNECT permission not granted for disconnect")
+                    connectedDevice = null
+                    return
+                }
+            }
+            
+            try {
+                hidDevice?.disconnect(device)
+            } catch (e: SecurityException) {
+                Log.e(TAG, "SecurityException disconnecting from device", e)
+            }
             connectedDevice = null
         }
     }
     
     private fun createNotificationChannel() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val channel = NotificationChannel(
-                NOTIFICATION_CHANNEL_ID,
-                "Bluetooth Keyboard Service",
-                NotificationManager.IMPORTANCE_LOW
-            )
-            channel.description = "Bluetooth HID Keyboard service notification"
-            val notificationManager = getSystemService(NotificationManager::class.java)
-            notificationManager.createNotificationChannel(channel)
-        }
+        // minSdk is 28, so NotificationChannel is always available
+        val channel = NotificationChannel(
+            NOTIFICATION_CHANNEL_ID,
+            "Bluetooth Keyboard Service",
+            NotificationManager.IMPORTANCE_HIGH  // HIGH importance for lock screen
+        )
+        channel.description = "Bluetooth HID Keyboard service notification"
+        channel.setShowBadge(false)
+        channel.lockscreenVisibility = Notification.VISIBILITY_PUBLIC
+        channel.enableLights(true)
+        channel.enableVibration(false)
+        val notificationManager = getSystemService(NotificationManager::class.java)
+        notificationManager.createNotificationChannel(channel)
     }
     
     private fun createNotification(): Notification {
@@ -346,22 +481,91 @@ class BluetoothHidService : Service() {
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
         
+        // Create action buttons for media controls
+        val leftIntent = Intent(this, BluetoothHidService::class.java).apply {
+            action = "ACTION_LEFT"
+        }
+        val leftPendingIntent = PendingIntent.getService(
+            this, 0, leftIntent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+        
+        val rightIntent = Intent(this, BluetoothHidService::class.java).apply {
+            action = "ACTION_RIGHT"
+        }
+        val rightPendingIntent = PendingIntent.getService(
+            this, 1, rightIntent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+        
+        val upIntent = Intent(this, BluetoothHidService::class.java).apply {
+            action = "ACTION_UP"
+        }
+        val upPendingIntent = PendingIntent.getService(
+            this, 2, upIntent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+        
+        val downIntent = Intent(this, BluetoothHidService::class.java).apply {
+            action = "ACTION_DOWN"
+        }
+        val downPendingIntent = PendingIntent.getService(
+            this, 3, downIntent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+        
+        val deviceName = if (connectedDevice != null) {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                if (ContextCompat.checkSelfPermission(
+                        this,
+                        Manifest.permission.BLUETOOTH_CONNECT
+                    ) == PackageManager.PERMISSION_GRANTED
+                ) {
+                    try {
+                        connectedDevice?.name ?: "Bağlı"
+                    } catch (e: SecurityException) {
+                        "Bağlı"
+                    }
+                } else {
+                    "Bağlı"
+                }
+            } else {
+                try {
+                    connectedDevice?.name ?: "Bağlı"
+                } catch (e: SecurityException) {
+                    "Bağlı"
+                }
+            }
+        } else {
+            "Bağlantı yok"
+        }
+        
         return NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
-            .setContentTitle(getString(R.string.notification_title))
-            .setContentText(getString(R.string.notification_text))
+            .setContentTitle("Bluetooth Klavye")
+            .setContentText(deviceName)
             .setSmallIcon(android.R.drawable.ic_menu_info_details)
             .setContentIntent(pendingIntent)
             .setOngoing(true)
+            .setCategory(NotificationCompat.CATEGORY_TRANSPORT)  // Media transport category
+            // MediaStyle removed due to import issues - using standard notification style
+            .addAction(android.R.drawable.ic_media_previous, "Sol", leftPendingIntent)
+            .addAction(android.R.drawable.ic_menu_sort_by_size, "Yukarı", upPendingIntent)
+            .addAction(android.R.drawable.ic_menu_sort_by_size, "Aşağı", downPendingIntent)
+            .addAction(android.R.drawable.ic_media_next, "Sağ", rightPendingIntent)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)  // Show on lock screen
+            .setPriority(NotificationCompat.PRIORITY_HIGH)  // HIGH priority for lock screen
+            .setShowWhen(false)
+            .setOnlyAlertOnce(true)
             .build()
     }
 }
 
 enum class KeyCode {
-    SPACE,
-    LEFT_ARROW,
-    RIGHT_ARROW,
     UP_ARROW,
     DOWN_ARROW,
+    LEFT_ARROW,
+    RIGHT_ARROW,
+    SPACE,
     F,
     NONE
 }
