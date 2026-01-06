@@ -48,6 +48,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var rightButton: Button
     private lateinit var enterButton: Button
     private lateinit var fullscreenButton: Button
+    private lateinit var brightnessUpButton: Button
+    private lateinit var brightnessDownButton: Button
     
     // Screen containers
     private lateinit var deviceSelectionContainer: LinearLayout
@@ -138,6 +140,8 @@ class MainActivity : AppCompatActivity() {
         rightButton = findViewById(R.id.rightButton)
         enterButton = findViewById(R.id.enterButton)
         fullscreenButton = findViewById(R.id.fullscreenButton)
+        brightnessUpButton = findViewById(R.id.brightnessUpButton)
+        brightnessDownButton = findViewById(R.id.brightnessDownButton)
         
         deviceSelectionContainer = findViewById(R.id.deviceSelectionContainer)
         connectionContainer = findViewById(R.id.connectionContainer)
@@ -269,6 +273,28 @@ class MainActivity : AppCompatActivity() {
         fullscreenButton.setOnClickListener {
             if (isConnected) {
                 BluetoothHidService.sendKey(KeyCode.F)
+            }
+        }
+        
+        brightnessUpButton.setOnClickListener {
+            if (isConnected) {
+                // Önce Consumer Control kodunu dene
+                BluetoothHidService.sendBrightnessUp()
+                // Eğer çalışmazsa Windows kısayolunu dene (Win + I sonra parlaklık)
+                // Not: Bu her PC'de çalışmayabilir
+            } else {
+                Toast.makeText(this, "Bluetooth bağlantısı gerekli", Toast.LENGTH_SHORT).show()
+            }
+        }
+        
+        brightnessDownButton.setOnClickListener {
+            if (isConnected) {
+                // Önce Consumer Control kodunu dene
+                BluetoothHidService.sendBrightnessDown()
+                // Eğer çalışmazsa Windows kısayolunu dene
+                // Not: Bu her PC'de çalışmayabilir
+            } else {
+                Toast.makeText(this, "Bluetooth bağlantısı gerekli", Toast.LENGTH_SHORT).show()
             }
         }
     }
@@ -513,6 +539,8 @@ class MainActivity : AppCompatActivity() {
         rightButton.isEnabled = enabled
         enterButton.isEnabled = enabled
         fullscreenButton.isEnabled = enabled
+        brightnessUpButton.isEnabled = enabled
+        brightnessDownButton.isEnabled = enabled
     }
     
     override fun onRequestPermissionsResult(
@@ -552,6 +580,7 @@ class MainActivity : AppCompatActivity() {
         super.onDestroy()
         stopScanning()
     }
+    
 }
 
 // Simple RecyclerView adapter for device list

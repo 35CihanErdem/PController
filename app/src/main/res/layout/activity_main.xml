@@ -127,7 +127,7 @@
                 android:layout_height="80dp"
                 android:text="UP"
                 android:textSize="18sp"
-                android:textStyle="bold"
+            android:textStyle="bold"
                 android:enabled="false" />
 
             <!-- LEFT and RIGHT Buttons -->
@@ -142,8 +142,8 @@
                     android:layout_height="80dp"
                     android:layout_marginEnd="8dp"
                     android:text="LEFT"
-                    android:textSize="18sp"
-                    android:textStyle="bold"
+            android:textSize="18sp"
+            android:textStyle="bold"
                     android:enabled="false" />
 
                 <Button
@@ -152,8 +152,8 @@
                     android:layout_height="80dp"
                     android:layout_marginStart="8dp"
                     android:text="RIGHT"
-                    android:textSize="18sp"
-                    android:textStyle="bold"
+            android:textSize="18sp"
+            android:textStyle="bold"
                     android:enabled="false" />
 
             </LinearLayout>
@@ -165,8 +165,8 @@
                 android:layout_height="80dp"
                 android:layout_marginTop="8dp"
                 android:text="DOWN"
-                android:textSize="18sp"
-                android:textStyle="bold"
+            android:textSize="18sp"
+            android:textStyle="bold"
                 android:enabled="false" />
 
         </LinearLayout>
@@ -192,6 +192,38 @@
             android:textSize="20sp"
             android:textStyle="bold"
             android:enabled="false" />
+
+        <!-- Brightness Controls -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:orientation="horizontal"
+            android:gravity="center">
+
+            <Button
+                android:id="@+id/brightnessDownButton"
+                android:layout_width="0dp"
+                android:layout_height="80dp"
+                android:layout_weight="1"
+                android:layout_marginEnd="8dp"
+                android:text="Parlaklık -"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:enabled="false" />
+
+            <Button
+                android:id="@+id/brightnessUpButton"
+                android:layout_width="0dp"
+                android:layout_height="80dp"
+                android:layout_weight="1"
+                android:layout_marginStart="8dp"
+                android:text="Parlaklık +"
+                android:textSize="18sp"
+                android:textStyle="bold"
+                android:enabled="false" />
+
+        </LinearLayout>
 
         <!-- Disconnect Button -->
         <Button

@@ -32,6 +32,24 @@ class BluetoothHidService : Service() {
         private var hidDevice: BluetoothHidDevice? = null
         private var connectedDevice: BluetoothDevice? = null
         private var isServiceConnected = false
+        private var serviceInstance: BluetoothHidService? = null
+        
+        fun setServiceInstance(instance: BluetoothHidService?) {
+            serviceInstance = instance
+        }
+        
+        private fun hasBluetoothConnectPermission(): Boolean {
+            return serviceInstance?.let { service ->
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    ContextCompat.checkSelfPermission(
+                        service,
+                        Manifest.permission.BLUETOOTH_CONNECT
+                    ) == PackageManager.PERMISSION_GRANTED
+                } else {
+                    true
+                }
+            } ?: false
+        }
         
         fun isConnected(): Boolean {
             return isServiceConnected && connectedDevice != null
@@ -40,6 +58,11 @@ class BluetoothHidService : Service() {
         fun sendKey(keyCode: KeyCode) {
             if (!isConnected()) {
                 Log.e(TAG, "Not connected, cannot send key")
+                return
+            }
+            
+            if (!hasBluetoothConnectPermission()) {
+                Log.e(TAG, "BLUETOOTH_CONNECT permission not granted")
                 return
             }
             
@@ -53,15 +76,174 @@ class BluetoothHidService : Service() {
                         
                         // Release key after 100ms to ensure it's registered
                         Handler(Looper.getMainLooper()).postDelayed({
-                            val releaseReport = createKeyboardReport(KeyCode.NONE)
-                            device.sendReport(targetDevice, 1, releaseReport)
-                            Log.d(TAG, "Released key: $keyCode")
+                            try {
+                                val releaseReport = createKeyboardReport(KeyCode.NONE)
+                                device.sendReport(targetDevice, 1, releaseReport)
+                                Log.d(TAG, "Released key: $keyCode")
+                            } catch (e: SecurityException) {
+                                Log.e(TAG, "SecurityException releasing key: $keyCode", e)
+                            } catch (e: Exception) {
+                                Log.e(TAG, "Error releasing key: $keyCode", e)
+                            }
                         }, 100)
+                    } catch (e: SecurityException) {
+                        Log.e(TAG, "SecurityException sending key: $keyCode", e)
                     } catch (e: Exception) {
                         Log.e(TAG, "Error sending key: $keyCode", e)
                     }
                 }
             }
+        }
+        
+        fun sendBrightnessUp() {
+            if (!isConnected()) {
+                Log.e(TAG, "Not connected, cannot send brightness up")
+                return
+            }
+            
+            if (!hasBluetoothConnectPermission()) {
+                Log.e(TAG, "BLUETOOTH_CONNECT permission not granted")
+                return
+            }
+            
+            hidDevice?.let { device ->
+                connectedDevice?.let { targetDevice ->
+                    try {
+                        // Method 1: Consumer Control - Brightness Increment (0x6F)
+                        val report = createConsumerControlReport(0x6F)
+                        val result = device.sendReport(targetDevice, 2, report)
+                        Log.d(TAG, "Sent brightness up (Consumer Control 0x6F), result: $result")
+                        
+                        // Release after 150ms
+                        Handler(Looper.getMainLooper()).postDelayed({
+                            try {
+                                val releaseReport = createConsumerControlReport(0x00)
+                                device.sendReport(targetDevice, 2, releaseReport)
+                                Log.d(TAG, "Released brightness up")
+                            } catch (e: SecurityException) {
+                                Log.e(TAG, "SecurityException releasing brightness up", e)
+                            } catch (e: Exception) {
+                                Log.e(TAG, "Error releasing brightness up", e)
+                            }
+                        }, 150)
+                        
+                        // Method 2: F tuşları (test için - hangisi çalışıyorsa onu kullan)
+                        // F tuşları HID kodları:
+                        // F1: 0x3A, F2: 0x3B, F3: 0x3C, F4: 0x3D, F5: 0x3E, F6: 0x3F
+                        // F7: 0x40, F8: 0x41, F9: 0x42, F10: 0x43, F11: 0x44, F12: 0x45
+                        // F7 (0x40) - Bazı PC'lerde parlaklık artırır
+                        Handler(Looper.getMainLooper()).postDelayed({
+                            try {
+                                sendFKey(targetDevice, device, 0x40) // F7
+                                Log.d(TAG, "Sent F7 key (0x40) for brightness up")
+                            } catch (e: SecurityException) {
+                                Log.e(TAG, "SecurityException sending F7 key", e)
+                            } catch (e: Exception) {
+                                Log.e(TAG, "Error sending F7 key", e)
+                            }
+                        }, 200) // Consumer Control'dan sonra 200ms bekle
+                    } catch (e: SecurityException) {
+                        Log.e(TAG, "SecurityException sending brightness up", e)
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Error sending brightness up", e)
+                    }
+                }
+            }
+        }
+        
+        fun sendBrightnessDown() {
+            if (!isConnected()) {
+                Log.e(TAG, "Not connected, cannot send brightness down")
+                return
+            }
+            
+            if (!hasBluetoothConnectPermission()) {
+                Log.e(TAG, "BLUETOOTH_CONNECT permission not granted")
+                return
+            }
+            
+            hidDevice?.let { device ->
+                connectedDevice?.let { targetDevice ->
+                    try {
+                        // Method 1: Consumer Control - Brightness Decrement (0x70)
+                        val report = createConsumerControlReport(0x70)
+                        val result = device.sendReport(targetDevice, 2, report)
+                        Log.d(TAG, "Sent brightness down (Consumer Control 0x70), result: $result")
+                        
+                        // Release after 150ms
+                        Handler(Looper.getMainLooper()).postDelayed({
+                            try {
+                                val releaseReport = createConsumerControlReport(0x00)
+                                device.sendReport(targetDevice, 2, releaseReport)
+                                Log.d(TAG, "Released brightness down")
+                            } catch (e: SecurityException) {
+                                Log.e(TAG, "SecurityException releasing brightness down", e)
+                            } catch (e: Exception) {
+                                Log.e(TAG, "Error releasing brightness down", e)
+                            }
+                        }, 150)
+                        
+                        // Method 2: F tuşları (test için - hangisi çalışıyorsa onu kullan)
+                        // F6 (0x3F) - Bazı PC'lerde parlaklık azaltır
+                        Handler(Looper.getMainLooper()).postDelayed({
+                            try {
+                                sendFKey(targetDevice, device, 0x3F) // F6
+                                Log.d(TAG, "Sent F6 key (0x3F) for brightness down")
+                            } catch (e: SecurityException) {
+                                Log.e(TAG, "SecurityException sending F6 key", e)
+                            } catch (e: Exception) {
+                                Log.e(TAG, "Error sending F6 key", e)
+                            }
+                        }, 200) // Consumer Control'dan sonra 200ms bekle
+                    } catch (e: SecurityException) {
+                        Log.e(TAG, "SecurityException sending brightness down", e)
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Error sending brightness down", e)
+                    }
+                }
+            }
+        }
+        
+        // F tuşu gönderme fonksiyonu (test için)
+        private fun sendFKey(targetDevice: BluetoothDevice, device: BluetoothHidDevice, fKeyCode: Int) {
+            if (!hasBluetoothConnectPermission()) {
+                Log.e(TAG, "BLUETOOTH_CONNECT permission not granted for F key")
+                return
+            }
+            
+            try {
+                val report = ByteArray(8)
+                report[0] = 0x00 // No modifiers
+                report[1] = 0x00 // Reserved
+                report[2] = fKeyCode.toByte() // F key code
+                
+                device.sendReport(targetDevice, 1, report)
+                
+                // Release after 100ms
+                Handler(Looper.getMainLooper()).postDelayed({
+                    try {
+                        val releaseReport = ByteArray(8)
+                        device.sendReport(targetDevice, 1, releaseReport)
+                    } catch (e: SecurityException) {
+                        Log.e(TAG, "SecurityException releasing F key", e)
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Error releasing F key", e)
+                    }
+                }, 100)
+            } catch (e: SecurityException) {
+                Log.e(TAG, "SecurityException sending F key", e)
+            } catch (e: Exception) {
+                Log.e(TAG, "Error sending F key", e)
+            }
+        }
+        
+        private fun createConsumerControlReport(usageCode: Int): ByteArray {
+            // Consumer Control Report Format (1 byte for Windows compatibility):
+            // Windows typically expects 1-byte Consumer Control reports
+            val report = ByteArray(1)
+            report[0] = (usageCode and 0xFF).toByte()
+            Log.d(TAG, "Creating consumer control report: 0x${usageCode.toString(16).uppercase()}")
+            return report
         }
         
         private fun createKeyboardReport(keyCode: KeyCode): ByteArray {
@@ -243,6 +425,9 @@ class BluetoothHidService : Service() {
     
     override fun onCreate() {
         super.onCreate()
+        // Set service instance for permission checks
+        setServiceInstance(this)
+        
         createNotificationChannel()
         // Delete old channel and recreate if needed (for testing)
         val notificationManager = getSystemService(NotificationManager::class.java)
@@ -308,12 +493,14 @@ class BluetoothHidService : Service() {
         hidDevice = null
         isServiceConnected = false
         connectedDevice = null
+        setServiceInstance(null) // Clear service instance
     }
     
     private fun registerHidDevice() {
         hidDevice?.let { device ->
-            // HID Descriptor for a keyboard with extended keys (including arrow keys)
+            // HID Descriptor for a keyboard with extended keys + Consumer Control (brightness)
             val descriptor = byteArrayOf(
+                // Keyboard Collection (Report ID 1)
                 0x05.toByte(), 0x01.toByte(),        // Usage Page (Generic Desktop)
                 0x09.toByte(), 0x06.toByte(),        // Usage (Keyboard)
                 0xa1.toByte(), 0x01.toByte(),        // Collection (Application)
@@ -346,6 +533,20 @@ class BluetoothHidService : Service() {
                 0x19.toByte(), 0x00.toByte(),        // Usage Minimum (0) - No key
                 0x29.toByte(), 0xE7.toByte(),        // Usage Maximum (231) - Extended keys
                 0x81.toByte(), 0x00.toByte(),        // Input (Data, Array) - Key codes
+                0xc0.toByte(),                       // End Collection
+                
+                // Consumer Control Collection (Report ID 2) - For brightness control
+                0x05.toByte(), 0x0C.toByte(),        // Usage Page (Consumer)
+                0x09.toByte(), 0x01.toByte(),        // Usage (Consumer Control)
+                0xa1.toByte(), 0x01.toByte(),        // Collection (Application)
+                0x85.toByte(), 0x02.toByte(),        // Report ID (2)
+                0x75.toByte(), 0x08.toByte(),        // Report Size (8 bits) - Changed to 8 bits for Windows
+                0x95.toByte(), 0x01.toByte(),        // Report Count (1)
+                0x15.toByte(), 0x00.toByte(),        // Logical Minimum (0)
+                0x25.toByte(), 0xFF.toByte(),        // Logical Maximum (255) - Changed to 255 for 8-bit
+                0x19.toByte(), 0x00.toByte(),        // Usage Minimum (0)
+                0x29.toByte(), 0xFF.toByte(),        // Usage Maximum (255) - Changed to 255 for 8-bit
+                0x81.toByte(), 0x00.toByte(),        // Input (Data, Array) - Consumer Control codes
                 0xc0.toByte()                        // End Collection
             )
             
