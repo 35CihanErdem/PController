@@ -34,8 +34,10 @@
     <string name="key_right">→</string>
     <string name="key_space">Space</string>
     <string name="key_esc">Esc</string>
+    <string name="pair_short">Eşleştir</string>
+    <string name="setup_title">Baglanti kurulumu</string>
+    <string name="key_play_symbol">Play</string>
     <string name="key_fullscreen">Tam Ekran</string>
-    <string name="key_play_pause">Play / Pause</string>
-    <string name="key_vol_down">Vol −</string>
+    <string name="key_vol_down">Vol -</string>
     <string name="key_vol_up">Vol +</string>
 </resources>

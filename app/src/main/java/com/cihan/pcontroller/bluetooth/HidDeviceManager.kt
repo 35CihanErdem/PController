@@ -51,6 +51,8 @@ class HidDeviceManager(
     private var connectStartedAtMs = 0L
     private var connectTimeoutRunnable: Runnable? = null
     private var retryRunnable: Runnable? = null
+    private var disconnectConfirmRunnable: Runnable? = null
+    private var connectGeneration: Int = 0
 
     private val profileListener = object : BluetoothProfile.ServiceListener {
         override fun onServiceConnected(profile: Int, proxy: BluetoothProfile) {
@@ -66,6 +68,12 @@ class HidDeviceManager(
             isAppRegistered = false
             profileProxyRequested = false
             hidDevice = null
+            // Bağlıyken anında Failed gösterme — debounce
+            if (_connectionState.value is ConnectionState.Connected) {
+                scheduleDisconnectConfirm(connectedDevice?.let { safeAddress(it) })
+                connectedDevice = null
+                return
+            }
             connectedDevice = null
             if (!isReleased) {
                 _connectionState.value = ConnectionState.Failed("HID profili koptu")
@@ -79,14 +87,27 @@ class HidDeviceManager(
             if (isReleased) return
             isAppRegistered = registered
             if (registered) {
-                _connectionState.value = ConnectionState.Registered
-                // Host already "plugged" — prefer that device
-                val autoAddress = pluggedDevice?.address ?: pendingConnectAddress
+                val current = _connectionState.value
+                if (current is ConnectionState.Connected) {
+                    Log.d(TAG, "Already connected — ignore re-register")
+                    return
+                }
+                if (current is ConnectionState.Connecting) {
+                    Log.d(TAG, "Already connecting — ignore re-register flip")
+                    return
+                }
+                val toConnect = pendingConnectAddress ?: pluggedDevice?.address
                 pendingConnectAddress = null
-                if (autoAddress != null) {
-                    connectInternal(autoAddress, isRetry = false)
+                if (toConnect != null) {
+                    connectInternal(toConnect, isRetry = false)
+                } else {
+                    _connectionState.value = ConnectionState.Registered
                 }
             } else {
+                if (_connectionState.value is ConnectionState.Connected) {
+                    Log.w(TAG, "unregister while connected — ignore")
+                    return
+                }
                 connectedDevice = null
                 if (_connectionState.value !is ConnectionState.Idle) {
                     _connectionState.value = ConnectionState.Failed("HID uygulama kaydı düştü")
@@ -102,11 +123,14 @@ class HidDeviceManager(
                 BluetoothProfile.STATE_CONNECTING -> {
                     if (targetAddress == null || targetAddress.equals(addr, ignoreCase = true)) {
                         targetAddress = addr
-                        _connectionState.value = ConnectionState.Connecting
+                        if (_connectionState.value !is ConnectionState.Connected) {
+                            _connectionState.value = ConnectionState.Connecting
+                        }
                     }
                 }
                 BluetoothProfile.STATE_CONNECTED -> {
                     cancelTimeouts()
+                    cancelDisconnectConfirm()
                     connectAttempts = 0
                     connectedDevice = device
                     targetAddress = addr
@@ -124,11 +148,7 @@ class HidDeviceManager(
         override fun onVirtualCableUnplug(device: BluetoothDevice?) {
             Log.d(TAG, "Virtual cable unplug")
             if (isReleased) return
-            cancelTimeouts()
-            connectedDevice = null
-            targetAddress = null
-            _connectionState.value =
-                if (isAppRegistered) ConnectionState.Registered else ConnectionState.Idle
+            scheduleDisconnectConfirm(device?.let { safeAddress(it) })
         }
     }
 
@@ -185,8 +205,25 @@ class HidDeviceManager(
             _connectionState.value = ConnectionState.Failed("Bluetooth izni yok")
             return
         }
+
+        val current = _connectionState.value
+        if (current is ConnectionState.Connected &&
+            current.deviceAddress.equals(deviceAddress, ignoreCase = true)
+        ) {
+            Log.d(TAG, "Already connected to $deviceAddress — skip")
+            return
+        }
+        if (current is ConnectionState.Connecting &&
+            targetAddress.equals(deviceAddress, ignoreCase = true)
+        ) {
+            Log.d(TAG, "Already connecting to $deviceAddress — skip")
+            return
+        }
+
         cancelTimeouts()
+        cancelDisconnectConfirm()
         connectAttempts = 0
+        connectGeneration++
         pendingConnectAddress = deviceAddress
         targetAddress = deviceAddress
         ensureConnectable()
@@ -201,6 +238,8 @@ class HidDeviceManager(
 
     fun disconnect() {
         cancelTimeouts()
+        cancelDisconnectConfirm()
+        connectGeneration++
         pendingConnectAddress = null
         targetAddress = null
         connectAttempts = 0
@@ -232,6 +271,7 @@ class HidDeviceManager(
     fun release() {
         isReleased = true
         cancelTimeouts()
+        cancelDisconnectConfirm()
         pendingConnectAddress = null
         targetAddress = null
         try {
@@ -326,6 +366,15 @@ class HidDeviceManager(
             start()
             return
         }
+
+        val current = _connectionState.value
+        if (current is ConnectionState.Connected &&
+            current.deviceAddress.equals(deviceAddress, ignoreCase = true)
+        ) {
+            Log.d(TAG, "connectInternal skip — already connected")
+            return
+        }
+
         if (!hasConnectPermission()) {
             _connectionState.value = ConnectionState.Failed("Bluetooth izni yok")
             return
@@ -357,7 +406,9 @@ class HidDeviceManager(
         }
         connectStartedAtMs = System.currentTimeMillis()
         ensureConnectable()
-        _connectionState.value = ConnectionState.Connecting
+        if (_connectionState.value !is ConnectionState.Connected) {
+            _connectionState.value = ConnectionState.Connecting
+        }
         scheduleConnectTimeout(deviceAddress)
 
         val ok = try {
@@ -392,12 +443,9 @@ class HidDeviceManager(
                 scheduleRetryOrFail(addr, "PC kabul etmedi / HID host kapalı")
             }
             is ConnectionState.Connected -> {
-                if (connectedDevice?.address.equals(addr, ignoreCase = true) == true) {
-                    connectedDevice = null
-                    targetAddress = null
-                    cancelTimeouts()
-                    _connectionState.value =
-                        if (isAppRegistered) ConnectionState.Registered else ConnectionState.Idle
+                if (connectedDevice?.address.equals(addr, ignoreCase = true) == true || isTarget) {
+                    // Bağlandıktan hemen sonra gelen sahte DISCONNECTED'ı yut
+                    scheduleDisconnectConfirm(addr)
                 }
             }
             else -> {
@@ -408,14 +456,45 @@ class HidDeviceManager(
         }
     }
 
+    private fun scheduleDisconnectConfirm(addr: String?) {
+        cancelDisconnectConfirm()
+        val generation = connectGeneration
+        val runnable = Runnable {
+            if (isReleased) return@Runnable
+            if (generation != connectGeneration) return@Runnable
+            if (_connectionState.value !is ConnectionState.Connected) return@Runnable
+            // Hâlâ Connected görünüyor ama disconnect confirm geldi — gerçekten düş
+            Log.d(TAG, "Confirming disconnect for $addr")
+            connectedDevice = null
+            targetAddress = null
+            cancelTimeouts()
+            _connectionState.value =
+                if (isAppRegistered) ConnectionState.Registered else ConnectionState.Idle
+        }
+        disconnectConfirmRunnable = runnable
+        mainHandler.postDelayed(runnable, 1800L)
+    }
+
+    private fun cancelDisconnectConfirm() {
+        disconnectConfirmRunnable?.let { mainHandler.removeCallbacks(it) }
+        disconnectConfirmRunnable = null
+    }
+
     private fun scheduleRetryOrFail(address: String, reason: String) {
+        // Bağlıyken retry/fail yapma
+        if (_connectionState.value is ConnectionState.Connected) {
+            Log.d(TAG, "Skip retry/fail — already connected")
+            return
+        }
         if (connectAttempts < MAX_CONNECT_ATTEMPTS) {
             connectAttempts++
             Log.d(TAG, "Retry connect in ${CONNECT_RETRY_DELAY_MS}ms (attempt $connectAttempts)")
             _connectionState.value = ConnectionState.Connecting
             retryRunnable?.let { mainHandler.removeCallbacks(it) }
+            val generation = connectGeneration
             val runnable = Runnable {
                 if (isReleased) return@Runnable
+                if (generation != connectGeneration) return@Runnable
                 if (_connectionState.value is ConnectionState.Connected) return@Runnable
                 connectInternal(address, isRetry = true)
             }
@@ -432,8 +511,10 @@ class HidDeviceManager(
 
     private fun scheduleConnectTimeout(address: String) {
         connectTimeoutRunnable?.let { mainHandler.removeCallbacks(it) }
+        val generation = connectGeneration
         val runnable = Runnable {
             if (isReleased) return@Runnable
+            if (generation != connectGeneration) return@Runnable
             if (_connectionState.value is ConnectionState.Connecting &&
                 targetAddress.equals(address, ignoreCase = true)
             ) {

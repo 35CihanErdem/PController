@@ -94,17 +94,19 @@ class RemoteViewModel(application: Application) : AndroidViewModel(application) 
                 showRepairHint = hint,
                 selectedAddress = when (state) {
                     is ConnectionState.Connected -> state.deviceAddress
-                    is ConnectionState.Idle, is ConnectionState.Registered ->
-                        if (current.connection is ConnectionState.Connected) null
-                        else current.selectedAddress
-                    else -> current.selectedAddress
+                    is ConnectionState.Failed -> current.selectedAddress
+                    is ConnectionState.Connecting, is ConnectionState.Starting ->
+                        current.selectedAddress
+                    is ConnectionState.Idle -> null
+                    is ConnectionState.Registered -> current.selectedAddress
                 },
                 selectedName = when (state) {
                     is ConnectionState.Connected -> state.deviceName ?: state.deviceAddress
-                    is ConnectionState.Idle, is ConnectionState.Registered ->
-                        if (current.connection is ConnectionState.Connected) null
-                        else current.selectedName
-                    else -> current.selectedName
+                    is ConnectionState.Failed -> current.selectedName
+                    is ConnectionState.Connecting, is ConnectionState.Starting ->
+                        current.selectedName
+                    is ConnectionState.Idle -> null
+                    is ConnectionState.Registered -> current.selectedName
                 }
             )
         }

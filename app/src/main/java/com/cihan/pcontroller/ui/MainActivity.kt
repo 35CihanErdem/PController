@@ -6,7 +6,9 @@ import android.content.Intent
 import android.content.ServiceConnection
 import android.os.Bundle
 import android.os.IBinder
+import android.view.LayoutInflater
 import android.view.View
+import android.view.ViewGroup
 import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.ProgressBar
@@ -32,14 +34,15 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
-/**
- * Sprint 2: bonded-only discovery, BT enable/permission gate, ViewModel UI state.
- * Platform profiles → Sprint 3.
- */
 class MainActivity : AppCompatActivity() {
+
+    companion object {
+        const val EXTRA_FROM_NOTIFICATION = "from_notification"
+    }
 
     private val viewModel: RemoteViewModel by viewModels()
 
+    private lateinit var statusDot: View
     private lateinit var statusText: TextView
     private lateinit var setupContainer: LinearLayout
     private lateinit var setupMessage: TextView
@@ -76,6 +79,10 @@ class MainActivity : AppCompatActivity() {
     private var bound = false
     private var stateJob: Job? = null
     private var connectRequestedAddress: String? = null
+    /** True between user tap-connect and Connected/Failed/cancel. */
+    private var awaitingConnection = false
+    /** Servis state'i gelene kadar cihaz listesine düşme (bildirimden dönüş). */
+    private var syncingServiceState = false
 
     private val deviceAdapter = BondedDeviceAdapter { device ->
         viewModel.selectDevice(device)
@@ -84,15 +91,12 @@ class MainActivity : AppCompatActivity() {
 
     private val enableBtLauncher = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
-    ) {
-        viewModel.refreshSetup()
-    }
+    ) { viewModel.refreshSetup() }
 
     private val permissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions()
     ) { result ->
-        val denied = result.filterValues { granted -> !granted }.keys
-        if (denied.isNotEmpty()) {
+        if (result.any { !it.value }) {
             Toast.makeText(this, R.string.bluetooth_permission_required, Toast.LENGTH_LONG).show()
         }
         viewModel.refreshSetup()
@@ -103,10 +107,19 @@ class MainActivity : AppCompatActivity() {
             val binder = service as BluetoothHidService.LocalBinder
             hidService = binder.getService()
             bound = true
+            val liveState = hidService!!.connectionState.value
+            viewModel.onConnectionState(liveState)
+            syncingServiceState = false
             observeServiceState()
-            connectRequestedAddress?.let { address ->
+            val pending = connectRequestedAddress
+            if (pending != null) {
                 connectRequestedAddress = null
-                hidService?.connect(address)
+                val already =
+                    liveState is ConnectionState.Connected ||
+                        liveState is ConnectionState.Connecting
+                if (!already) {
+                    hidService?.connect(pending)
+                }
             }
         }
 
@@ -115,28 +128,57 @@ class MainActivity : AppCompatActivity() {
             hidService = null
             stateJob?.cancel()
             stateJob = null
+            syncingServiceState = false
+        }
+
+        override fun onNullBinding(name: ComponentName?) {
+            syncingServiceState = false
         }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
-        bindViews()
-        setupListeners()
-        deviceListRecyclerView.layoutManager = LinearLayoutManager(this)
-        deviceListRecyclerView.adapter = deviceAdapter
+        try {
+            setContentView(R.layout.activity_main)
+            bindViews()
+            setupListeners()
+            deviceListRecyclerView.layoutManager = LinearLayoutManager(this)
+            deviceListRecyclerView.adapter = deviceAdapter
+            handleOpenIntent(intent)
 
-        lifecycleScope.launch {
-            repeatOnLifecycle(Lifecycle.State.STARTED) {
-                viewModel.uiState.collectLatest { render(it) }
+            lifecycleScope.launch {
+                repeatOnLifecycle(Lifecycle.State.STARTED) {
+                    viewModel.uiState.collectLatest { render(it) }
+                }
             }
+        } catch (e: Exception) {
+            Toast.makeText(this, "Açılış hatası: ${e.message}", Toast.LENGTH_LONG).show()
+            finish()
         }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleOpenIntent(intent)
+        tryBindExistingService()
     }
 
     override fun onStart() {
         super.onStart()
         viewModel.refreshSetup()
-        ensureServiceBound()
+        // Bildirimden / geri dönüşte çalışan servise bağlan → Connected ekranı gelsin
+        tryBindExistingService()
+        val conn = viewModel.uiState.value.connection
+        if (conn is ConnectionState.Connected || awaitingConnection) {
+            ensureServiceBound()
+        }
+    }
+
+    private fun handleOpenIntent(intent: Intent?) {
+        if (intent?.getBooleanExtra(EXTRA_FROM_NOTIFICATION, false) == true) {
+            syncingServiceState = true
+        }
     }
 
     override fun onStop() {
@@ -144,13 +186,17 @@ class MainActivity : AppCompatActivity() {
         stateJob?.cancel()
         stateJob = null
         if (bound) {
-            unbindService(serviceConnection)
+            try {
+                unbindService(serviceConnection)
+            } catch (_: Exception) {
+            }
             bound = false
             hidService = null
         }
     }
 
     private fun bindViews() {
+        statusDot = findViewById(R.id.statusDot)
         statusText = findViewById(R.id.statusText)
         setupContainer = findViewById(R.id.setupContainer)
         setupMessage = findViewById(R.id.setupMessage)
@@ -191,12 +237,8 @@ class MainActivity : AppCompatActivity() {
         requestPermissionButton.setOnClickListener {
             permissionLauncher.launch(PermissionHelper.requiredRuntimePermissions())
         }
-        openAppSettingsButton.setOnClickListener {
-            PermissionHelper.openAppSettings(this)
-        }
-        refreshDevicesButton.setOnClickListener {
-            viewModel.refreshSetup()
-        }
+        openAppSettingsButton.setOnClickListener { PermissionHelper.openAppSettings(this) }
+        refreshDevicesButton.setOnClickListener { viewModel.refreshSetup() }
         openBluetoothSettingsButton.setOnClickListener {
             PermissionHelper.openBluetoothSettings(this)
         }
@@ -205,11 +247,13 @@ class MainActivity : AppCompatActivity() {
         }
         repairHintButton.setOnClickListener { showRepairDialog() }
         cancelConnectButton.setOnClickListener {
+            awaitingConnection = false
             hidService?.disconnect()
             viewModel.clearSelection()
             viewModel.refreshSetup()
         }
         disconnectButton.setOnClickListener {
+            awaitingConnection = false
             hidService?.disconnect()
             viewModel.clearSelection()
             viewModel.refreshSetup()
@@ -230,9 +274,47 @@ class MainActivity : AppCompatActivity() {
     private fun ensureServiceBound() {
         if (!PermissionHelper.hasBluetoothPermissions(this)) return
         if (!PermissionHelper.isBluetoothEnabled(this)) return
-        val intent = Intent(this, BluetoothHidService::class.java)
-        startForegroundService(intent)
-        bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
+        if (bound) return
+        try {
+            val intent = Intent(this, BluetoothHidService::class.java)
+            startForegroundService(intent)
+            bindService(intent, serviceConnection, Context.BIND_AUTO_CREATE)
+        } catch (e: Exception) {
+            Toast.makeText(this, "Servis başlatılamadı: ${e.message}", Toast.LENGTH_LONG).show()
+            awaitingConnection = false
+            syncingServiceState = false
+        }
+    }
+
+    /** Servis zaten çalışıyorsa (bildirim) AUTO_CREATE olmadan bağlan — Connected state gelsin. */
+    private fun tryBindExistingService() {
+        if (bound) return
+        if (!PermissionHelper.hasBluetoothPermissions(this)) {
+            syncingServiceState = false
+            return
+        }
+        if (!PermissionHelper.isBluetoothEnabled(this)) {
+            syncingServiceState = false
+            return
+        }
+        try {
+            val intent = Intent(this, BluetoothHidService::class.java)
+            val started = bindService(intent, serviceConnection, 0)
+            if (!started) {
+                syncingServiceState = false
+            } else {
+                // onServiceConnected async; kısa süre cihaz listesine düşme
+                syncingServiceState = true
+                window.decorView.postDelayed({
+                    if (syncingServiceState && !bound) {
+                        syncingServiceState = false
+                        render(viewModel.uiState.value)
+                    }
+                }, 800)
+            }
+        } catch (_: Exception) {
+            syncingServiceState = false
+        }
     }
 
     private fun observeServiceState() {
@@ -240,24 +322,30 @@ class MainActivity : AppCompatActivity() {
         val service = hidService ?: return
         stateJob = lifecycleScope.launch {
             service.connectionState.collectLatest { state ->
+                if (state is ConnectionState.Connected || state is ConnectionState.Failed) {
+                    awaitingConnection = false
+                }
                 viewModel.onConnectionState(state)
             }
         }
     }
 
+    /** Tek connect yolu: binder hazır olunca bir kez connect. Intent ile ikinci connect yok. */
     private fun connectTo(address: String) {
-        ensureServiceBound()
-        val service = hidService
-        if (service != null && bound) {
-            service.connect(address)
-        } else {
-            connectRequestedAddress = address
-            val intent = Intent(this, BluetoothHidService::class.java).apply {
-                action = BluetoothHidService.ACTION_CONNECT
-                putExtra(BluetoothHidService.EXTRA_DEVICE_ADDRESS, address)
+        awaitingConnection = true
+        connectRequestedAddress = address
+        try {
+            if (bound && hidService != null) {
+                val addr = connectRequestedAddress
+                connectRequestedAddress = null
+                if (addr != null) hidService?.connect(addr)
+            } else {
+                ensureServiceBound()
             }
-            startForegroundService(intent)
-            bindService(Intent(this, BluetoothHidService::class.java), serviceConnection, Context.BIND_AUTO_CREATE)
+        } catch (e: Exception) {
+            awaitingConnection = false
+            connectRequestedAddress = null
+            Toast.makeText(this, "Bağlantı başlatılamadı: ${e.message}", Toast.LENGTH_LONG).show()
         }
     }
 
@@ -265,13 +353,13 @@ class MainActivity : AppCompatActivity() {
         when (state.setup) {
             SetupPhase.Checking -> {
                 hideAllPanels()
-                statusText.setText(R.string.status_ready)
+                setStatus(R.string.status_ready, connected = false)
             }
             SetupPhase.NeedBluetoothEnable -> {
                 hideAllPanels()
                 setupContainer.visibility = View.VISIBLE
                 setupMessage.setText(R.string.bt_off_message)
-                statusText.text = "Bluetooth kapalı"
+                setStatus("Bluetooth kapalı", connected = false)
                 enableBluetoothButton.visibility = View.VISIBLE
                 requestPermissionButton.visibility = View.GONE
                 openAppSettingsButton.visibility = View.GONE
@@ -280,7 +368,7 @@ class MainActivity : AppCompatActivity() {
                 hideAllPanels()
                 setupContainer.visibility = View.VISIBLE
                 setupMessage.setText(R.string.bt_permission_message)
-                statusText.setText(R.string.bluetooth_permission_required)
+                setStatus(R.string.bluetooth_permission_required, connected = false)
                 enableBluetoothButton.visibility = View.GONE
                 requestPermissionButton.visibility = View.VISIBLE
                 openAppSettingsButton.visibility = View.VISIBLE
@@ -292,11 +380,15 @@ class MainActivity : AppCompatActivity() {
     private fun renderReady(state: RemoteUiState) {
         when (val connection = state.connection) {
             is ConnectionState.Connected -> {
+                awaitingConnection = false
                 hideAllPanels()
                 inputContainer.visibility = View.VISIBLE
-                statusText.text = getString(
-                    R.string.status_connected,
-                    connection.deviceName ?: connection.deviceAddress
+                setStatus(
+                    getString(
+                        R.string.status_connected,
+                        connection.deviceName ?: connection.deviceAddress
+                    ),
+                    connected = true
                 )
             }
             is ConnectionState.Connecting, is ConnectionState.Starting -> {
@@ -305,39 +397,66 @@ class MainActivity : AppCompatActivity() {
                 connectionProgressBar.visibility = View.VISIBLE
                 retryButton.visibility = View.GONE
                 repairHintButton.visibility = View.GONE
-                statusText.setText(
-                    if (connection is ConnectionState.Connecting) R.string.status_connecting
-                    else R.string.status_preparing
+                setStatus(
+                    getString(
+                        if (connection is ConnectionState.Connecting) R.string.status_connecting
+                        else R.string.status_preparing
+                    ),
+                    connected = false
                 )
             }
             is ConnectionState.Failed -> {
+                awaitingConnection = false
                 hideAllPanels()
                 connectionContainer.visibility = View.VISIBLE
                 connectionProgressBar.visibility = View.GONE
                 retryButton.visibility = View.VISIBLE
                 repairHintButton.visibility =
                     if (state.showRepairHint) View.VISIBLE else View.GONE
-                statusText.text = getString(R.string.status_error, connection.reason)
+                setStatus(getString(R.string.status_error, connection.reason), connected = false)
             }
             is ConnectionState.Registered, is ConnectionState.Idle -> {
-                // Mid-connect Registered: keep connecting chrome if we have a selection
-                if (state.selectedAddress != null &&
-                    connectionContainer.visibility == View.VISIBLE &&
-                    inputContainer.visibility != View.VISIBLE
-                ) {
+                if (awaitingConnection && state.selectedAddress != null) {
+                    hideAllPanels()
+                    connectionContainer.visibility = View.VISIBLE
                     connectionProgressBar.visibility = View.VISIBLE
                     retryButton.visibility = View.GONE
-                    statusText.setText(R.string.status_preparing)
+                    repairHintButton.visibility = View.GONE
+                    setStatus(R.string.status_preparing, connected = false)
+                    return
+                }
+                // Bildirimden geldik / servis sync — cihaz listesine atlama
+                if (syncingServiceState) {
+                    hideAllPanels()
+                    connectionContainer.visibility = View.VISIBLE
+                    connectionProgressBar.visibility = View.VISIBLE
+                    retryButton.visibility = View.GONE
+                    repairHintButton.visibility = View.GONE
+                    setStatus(R.string.status_preparing, connected = false)
                     return
                 }
                 hideAllPanels()
                 deviceSelectionContainer.visibility = View.VISIBLE
-                statusText.setText(R.string.status_ready)
+                setStatus(R.string.status_ready, connected = false)
                 deviceAdapter.submit(state.devices)
                 emptyDevicesText.visibility =
                     if (state.devices.isEmpty()) View.VISIBLE else View.GONE
             }
         }
+    }
+
+    private fun setStatus(textRes: Int, connected: Boolean) {
+        statusText.setText(textRes)
+        statusDot.setBackgroundResource(
+            if (connected) R.drawable.dot_connected else R.drawable.dot_idle
+        )
+    }
+
+    private fun setStatus(text: String, connected: Boolean) {
+        statusText.text = text
+        statusDot.setBackgroundResource(
+            if (connected) R.drawable.dot_connected else R.drawable.dot_idle
+        )
     }
 
     private fun hideAllPanels() {
@@ -371,23 +490,23 @@ private class BondedDeviceAdapter(
         notifyDataSetChanged()
     }
 
-    override fun onCreateViewHolder(parent: android.view.ViewGroup, viewType: Int): Holder {
-        val view = android.view.LayoutInflater.from(parent.context)
-            .inflate(android.R.layout.simple_list_item_2, parent, false)
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): Holder {
+        val view = LayoutInflater.from(parent.context)
+            .inflate(R.layout.item_device, parent, false)
         return Holder(view)
     }
 
     override fun onBindViewHolder(holder: Holder, position: Int) {
         val item = items[position]
-        holder.title.text = item.name
-        holder.subtitle.text = item.address
+        holder.name.text = item.name
+        holder.address.text = item.address
         holder.itemView.setOnClickListener { onClick(item) }
     }
 
     override fun getItemCount(): Int = items.size
 
     class Holder(view: View) : RecyclerView.ViewHolder(view) {
-        val title: TextView = view.findViewById(android.R.id.text1)
-        val subtitle: TextView = view.findViewById(android.R.id.text2)
+        val name: TextView = view.findViewById(R.id.deviceName)
+        val address: TextView = view.findViewById(R.id.deviceAddress)
     }
 }

@@ -48,5 +48,6 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.2")
     implementation("androidx.lifecycle:lifecycle-service:2.6.2")
     implementation("androidx.recyclerview:recyclerview:1.3.2")
+    implementation("androidx.media:media:1.7.1")
 }
 

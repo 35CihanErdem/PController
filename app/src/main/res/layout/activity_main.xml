@@ -4,26 +4,59 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/background"
+    android:background="@color/bg_top"
     tools:context=".ui.MainActivity">
 
     <TextView
-        android:id="@+id/statusText"
-        android:layout_width="0dp"
+        android:id="@+id/brandText"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginStart="20dp"
-        android:layout_marginTop="24dp"
-        android:layout_marginEnd="20dp"
-        android:gravity="center"
-        android:text="@string/status_ready"
+        android:layout_marginTop="18dp"
+        android:text="@string/app_name"
         android:textColor="@color/text_primary"
-        android:textSize="18sp"
+        android:textSize="22sp"
         android:textStyle="bold"
-        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <!-- Setup: BT off / permission -->
+    <LinearLayout
+        android:id="@+id/statusChip"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="12dp"
+        android:layout_marginEnd="20dp"
+        android:background="@drawable/bg_status_chip"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:paddingLeft="14dp"
+        android:paddingTop="10dp"
+        android:paddingRight="14dp"
+        android:paddingBottom="10dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/brandText">
+
+        <View
+            android:id="@+id/statusDot"
+            android:layout_width="10dp"
+            android:layout_height="10dp"
+            android:background="@drawable/dot_idle" />
+
+        <TextView
+            android:id="@+id/statusText"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="10dp"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:maxLines="2"
+            android:text="@string/status_ready"
+            android:textColor="@color/text_primary"
+            android:textSize="14sp" />
+    </LinearLayout>
+
     <LinearLayout
         android:id="@+id/setupContainer"
         android:layout_width="0dp"
@@ -35,82 +68,116 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/statusText">
+        app:layout_constraintTop_toBottomOf="@id/statusChip">
 
-        <TextView
-            android:id="@+id/setupMessage"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:gravity="center"
-            android:textColor="@color/text_secondary"
-            android:textSize="16sp"
-            tools:text="Bluetooth kapalı" />
+            android:background="@drawable/bg_panel"
+            android:orientation="vertical"
+            android:padding="22dp">
 
-        <Button
-            android:id="@+id/enableBluetoothButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="20dp"
-            android:text="@string/enable_bluetooth"
-            android:visibility="gone" />
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/setup_title"
+                android:textColor="@color/text_primary"
+                android:textSize="18sp"
+                android:textStyle="bold" />
 
-        <Button
-            android:id="@+id/requestPermissionButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:text="@string/grant_permission"
-            android:visibility="gone" />
+            <TextView
+                android:id="@+id/setupMessage"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:textColor="@color/text_secondary"
+                android:textSize="15sp"
+                tools:text="Bluetooth kapali" />
 
-        <Button
-            android:id="@+id/openAppSettingsButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="12dp"
-            android:text="@string/open_app_settings"
-            android:visibility="gone" />
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/enableBluetoothButton"
+                style="@style/RemotePrimaryKey"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:layout_marginTop="20dp"
+                android:text="@string/enable_bluetooth"
+                android:visibility="gone" />
+
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/requestPermissionButton"
+                style="@style/RemotePrimaryKey"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:layout_marginTop="12dp"
+                android:text="@string/grant_permission"
+                android:visibility="gone" />
+
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/openAppSettingsButton"
+                style="@style/RemoteGhostButton"
+                android:layout_width="match_parent"
+                android:layout_height="48dp"
+                android:layout_marginTop="4dp"
+                android:text="@string/open_app_settings"
+                android:visibility="gone" />
+        </LinearLayout>
     </LinearLayout>
 
-    <!-- Bonded device list -->
     <LinearLayout
         android:id="@+id/deviceSelectionContainer"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:orientation="vertical"
-        android:padding="20dp"
+        android:paddingLeft="20dp"
+        android:paddingTop="16dp"
+        android:paddingRight="20dp"
+        android:paddingBottom="12dp"
         android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/statusText">
+        app:layout_constraintTop_toBottomOf="@id/statusChip">
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/bonded_devices_hint"
             android:textColor="@color/text_secondary"
-            android:textSize="14sp" />
+            android:textSize="13sp" />
 
-        <Button
-            android:id="@+id/refreshDevicesButton"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
-            android:text="@string/refresh_devices" />
+            android:orientation="horizontal">
 
-        <Button
-            android:id="@+id/openBluetoothSettingsButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:text="@string/open_bluetooth_settings" />
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/refreshDevicesButton"
+                style="@style/RemoteActionKey"
+                android:layout_width="0dp"
+                android:layout_height="56dp"
+                android:layout_marginEnd="6dp"
+                android:layout_weight="1"
+                android:text="@string/refresh_devices" />
+
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/openBluetoothSettingsButton"
+                style="@style/RemoteActionKey"
+                android:layout_width="0dp"
+                android:layout_height="56dp"
+                android:layout_marginStart="6dp"
+                android:layout_weight="1"
+                android:text="@string/pair_short" />
+        </LinearLayout>
 
         <TextView
             android:id="@+id/emptyDevicesText"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="24dp"
+            android:background="@drawable/bg_panel"
             android:gravity="center"
+            android:padding="20dp"
             android:text="@string/no_bonded_devices"
             android:textColor="@color/text_secondary"
             android:visibility="gone" />
@@ -119,179 +186,190 @@
             android:id="@+id/deviceListRecyclerView"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_marginTop="12dp"
-            android:layout_weight="1" />
+            android:layout_marginTop="14dp"
+            android:layout_weight="1"
+            android:clipToPadding="false" />
     </LinearLayout>
 
-    <!-- Connecting -->
     <LinearLayout
         android:id="@+id/connectionContainer"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
+        android:layout_margin="20dp"
+        android:background="@drawable/bg_panel"
+        android:gravity="center_horizontal"
         android:orientation="vertical"
-        android:padding="20dp"
+        android:padding="24dp"
         android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/statusText">
+        app:layout_constraintTop_toBottomOf="@id/statusChip"
+        app:layout_constraintVertical_bias="0.35">
 
         <ProgressBar
             android:id="@+id/connectionProgressBar"
             android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center" />
+            android:layout_height="wrap_content" />
 
-        <Button
+        <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/retryButton"
+            style="@style/RemotePrimaryKey"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_height="56dp"
+            android:layout_marginTop="18dp"
             android:text="@string/retry"
             android:visibility="gone" />
 
-        <Button
+        <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/repairHintButton"
+            style="@style/RemoteActionKey"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_height="56dp"
+            android:layout_marginTop="10dp"
             android:text="@string/repair_pairing"
             android:visibility="gone" />
 
-        <Button
+        <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/cancelConnectButton"
+            style="@style/RemoteGhostButton"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
+            android:layout_height="48dp"
+            android:layout_marginTop="4dp"
             android:text="@string/cancel" />
     </LinearLayout>
 
-    <!-- Remote -->
     <ScrollView
         android:id="@+id/inputContainer"
         android:layout_width="0dp"
         android:layout_height="0dp"
+        android:fillViewport="true"
+        android:paddingBottom="16dp"
         android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/statusText">
+        app:layout_constraintTop_toBottomOf="@id/statusChip">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:gravity="center_horizontal"
             android:orientation="vertical"
-            android:padding="20dp">
-
-            <Button
-                android:id="@+id/upButton"
-                android:layout_width="120dp"
-                android:layout_height="72dp"
-                android:text="@string/key_up"
-                android:textStyle="bold" />
+            android:paddingLeft="20dp"
+            android:paddingTop="8dp"
+            android:paddingRight="20dp">
 
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:orientation="horizontal">
+                android:background="@drawable/bg_panel"
+                android:gravity="center"
+                android:orientation="vertical"
+                android:padding="18dp">
 
-                <Button
-                    android:id="@+id/leftButton"
-                    android:layout_width="120dp"
-                    android:layout_height="72dp"
-                    android:layout_marginEnd="8dp"
-                    android:text="@string/key_left"
-                    android:textStyle="bold" />
+                <androidx.appcompat.widget.AppCompatButton
+                    android:id="@+id/upButton"
+                    style="@style/RemoteDpadKey"
+                    android:text="@string/key_up" />
 
-                <Button
-                    android:id="@+id/rightButton"
-                    android:layout_width="120dp"
-                    android:layout_height="72dp"
-                    android:layout_marginStart="8dp"
-                    android:text="@string/key_right"
-                    android:textStyle="bold" />
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal">
+
+                    <androidx.appcompat.widget.AppCompatButton
+                        android:id="@+id/leftButton"
+                        style="@style/RemoteDpadKey"
+                        android:text="@string/key_left" />
+
+                    <androidx.appcompat.widget.AppCompatButton
+                        android:id="@+id/playPauseButton"
+                        style="@style/RemoteDpadKey"
+                        android:layout_marginLeft="8dp"
+                        android:layout_marginRight="8dp"
+                        android:text="@string/key_play_symbol"
+                        android:textSize="16sp" />
+
+                    <androidx.appcompat.widget.AppCompatButton
+                        android:id="@+id/rightButton"
+                        style="@style/RemoteDpadKey"
+                        android:text="@string/key_right" />
+                </LinearLayout>
+
+                <androidx.appcompat.widget.AppCompatButton
+                    android:id="@+id/downButton"
+                    style="@style/RemoteDpadKey"
+                    android:layout_marginTop="8dp"
+                    android:text="@string/key_down" />
             </LinearLayout>
-
-            <Button
-                android:id="@+id/downButton"
-                android:layout_width="120dp"
-                android:layout_height="72dp"
-                android:layout_marginTop="8dp"
-                android:text="@string/key_down"
-                android:textStyle="bold" />
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
+                android:layout_marginTop="16dp"
                 android:orientation="horizontal">
 
-                <Button
+                <androidx.appcompat.widget.AppCompatButton
                     android:id="@+id/spaceButton"
+                    style="@style/RemoteActionKey"
                     android:layout_width="0dp"
-                    android:layout_height="72dp"
-                    android:layout_marginEnd="8dp"
+                    android:layout_height="56dp"
+                    android:layout_marginEnd="6dp"
                     android:layout_weight="1"
-                    android:text="@string/key_space"
-                    android:textStyle="bold" />
+                    android:text="@string/key_space" />
 
-                <Button
+                <androidx.appcompat.widget.AppCompatButton
                     android:id="@+id/escButton"
+                    style="@style/RemoteActionKey"
                     android:layout_width="0dp"
-                    android:layout_height="72dp"
-                    android:layout_marginStart="8dp"
+                    android:layout_height="56dp"
+                    android:layout_marginStart="6dp"
                     android:layout_weight="1"
-                    android:text="@string/key_esc"
-                    android:textStyle="bold" />
+                    android:text="@string/key_esc" />
             </LinearLayout>
 
-            <Button
+            <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/fullscreenButton"
+                style="@style/RemotePrimaryKey"
                 android:layout_width="match_parent"
-                android:layout_height="72dp"
-                android:layout_marginTop="12dp"
-                android:text="@string/key_fullscreen"
-                android:textStyle="bold" />
-
-            <Button
-                android:id="@+id/playPauseButton"
-                android:layout_width="match_parent"
-                android:layout_height="72dp"
-                android:layout_marginTop="12dp"
-                android:text="@string/key_play_pause"
-                android:textStyle="bold" />
+                android:layout_height="56dp"
+                android:layout_marginTop="10dp"
+                android:text="@string/key_fullscreen" />
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
+                android:layout_marginTop="10dp"
                 android:orientation="horizontal">
 
-                <Button
+                <androidx.appcompat.widget.AppCompatButton
                     android:id="@+id/volumeDownButton"
+                    style="@style/RemoteActionKey"
                     android:layout_width="0dp"
-                    android:layout_height="72dp"
-                    android:layout_marginEnd="8dp"
+                    android:layout_height="56dp"
+                    android:layout_marginEnd="6dp"
                     android:layout_weight="1"
-                    android:text="@string/key_vol_down"
-                    android:textStyle="bold" />
+                    android:text="@string/key_vol_down" />
 
-                <Button
+                <androidx.appcompat.widget.AppCompatButton
                     android:id="@+id/volumeUpButton"
+                    style="@style/RemoteActionKey"
                     android:layout_width="0dp"
-                    android:layout_height="72dp"
-                    android:layout_marginStart="8dp"
+                    android:layout_height="56dp"
+                    android:layout_marginStart="6dp"
                     android:layout_weight="1"
-                    android:text="@string/key_vol_up"
-                    android:textStyle="bold" />
+                    android:text="@string/key_vol_up" />
             </LinearLayout>
 
-            <Button
+            <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/disconnectButton"
+                style="@style/RemoteGhostButton"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
+                android:layout_height="48dp"
+                android:layout_marginTop="14dp"
                 android:text="@string/disconnect" />
         </LinearLayout>
     </ScrollView>
