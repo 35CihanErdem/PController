@@ -1,14 +1,41 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Bluetooth Keyboard</string>
+    <string name="app_name">PController</string>
     <string name="connect">Bağlan</string>
     <string name="disconnect">Bağlantıyı Kes</string>
-    <string name="status_ready">Cihaz seçin</string>
+    <string name="cancel">İptal</string>
+    <string name="retry">Tekrar Dene</string>
+    <string name="status_ready">Eşleşmiş PC seçin</string>
     <string name="status_connected">Bağlı: %1$s</string>
     <string name="status_connecting">Bağlanıyor…</string>
+    <string name="status_preparing">HID hazırlanıyor…</string>
     <string name="status_error">Hata: %1$s</string>
-    <string name="notification_title">Bluetooth Klavye Aktif</string>
+    <string name="notification_title">PController aktif</string>
     <string name="notification_text">Uygulama çalışıyor</string>
     <string name="bluetooth_permission_required">Bluetooth izni gerekli</string>
-</resources>
 
+    <string name="enable_bluetooth">Bluetooth’u Aç</string>
+    <string name="grant_permission">İzin Ver</string>
+    <string name="open_app_settings">Ayarlara Git</string>
+    <string name="open_bluetooth_settings">Bluetooth ayarlarından eşleştir</string>
+    <string name="refresh_devices">Listeyi yenile</string>
+    <string name="bonded_devices_hint">Yalnızca sistemde eşleştirilmiş cihazlar listelenir. PC’nizi görmüyorsanız önce Bluetooth ayarlarından eşleştirin.</string>
+    <string name="no_bonded_devices">Eşleşmiş cihaz yok.\nWindows’ta Bluetooth → cihaz ekle ile telefonunuzu eşleştirin, sonra yenileyin.</string>
+    <string name="bt_off_message">PController’ın çalışması için Bluetooth’un açık olması gerekir.</string>
+    <string name="bt_permission_message">PController, eşleştirilmiş bilgisayarları görmek ve HID bağlantısı kurmak için Bluetooth iznine ihtiyaç duyar.</string>
+    <string name="repair_pairing">Yeniden eşleştirme yardımı</string>
+    <string name="repair_dialog_title">Yeniden eşleştir</string>
+    <string name="repair_dialog_message">Windows HID önbelleği eski kalmış olabilir.\n\n1) Windows’ta bu telefonu kaldırın\n2) Telefonda PC eşleşmesini silin\n3) Yeniden eşleştirin\n4) PController’da tekrar bağlanın</string>
+    <string name="repair_open_settings">Bluetooth ayarlarını aç</string>
+
+    <string name="key_up">↑</string>
+    <string name="key_down">↓</string>
+    <string name="key_left">←</string>
+    <string name="key_right">→</string>
+    <string name="key_space">Space</string>
+    <string name="key_esc">Esc</string>
+    <string name="key_fullscreen">Tam Ekran</string>
+    <string name="key_play_pause">Play / Pause</string>
+    <string name="key_vol_down">Vol −</string>
+    <string name="key_vol_up">Vol +</string>
+</resources>

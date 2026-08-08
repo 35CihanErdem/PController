@@ -5,9 +5,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/background"
-    tools:context=".MainActivity">
+    tools:context=".ui.MainActivity">
 
-    <!-- Status Text -->
     <TextView
         android:id="@+id/statusText"
         android:layout_width="0dp"
@@ -16,7 +15,7 @@
         android:layout_marginTop="24dp"
         android:layout_marginEnd="20dp"
         android:gravity="center"
-        android:text="Bağlantı yok"
+        android:text="@string/status_ready"
         android:textColor="@color/text_primary"
         android:textSize="18sp"
         android:textStyle="bold"
@@ -24,43 +23,107 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-    <!-- Device Selection Screen -->
+    <!-- Setup: BT off / permission -->
+    <LinearLayout
+        android:id="@+id/setupContainer"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:padding="24dp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/statusText">
+
+        <TextView
+            android:id="@+id/setupMessage"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:textColor="@color/text_secondary"
+            android:textSize="16sp"
+            tools:text="Bluetooth kapalı" />
+
+        <Button
+            android:id="@+id/enableBluetoothButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="@string/enable_bluetooth"
+            android:visibility="gone" />
+
+        <Button
+            android:id="@+id/requestPermissionButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="@string/grant_permission"
+            android:visibility="gone" />
+
+        <Button
+            android:id="@+id/openAppSettingsButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="@string/open_app_settings"
+            android:visibility="gone" />
+    </LinearLayout>
+
+    <!-- Bonded device list -->
     <LinearLayout
         android:id="@+id/deviceSelectionContainer"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:orientation="vertical"
         android:padding="20dp"
+        android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/statusText">
 
-        <Button
-            android:id="@+id/scanButton"
+        <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Tara"
-            android:textSize="16sp" />
+            android:text="@string/bonded_devices_hint"
+            android:textColor="@color/text_secondary"
+            android:textSize="14sp" />
 
-        <ProgressBar
-            android:id="@+id/progressBar"
-            android:layout_width="wrap_content"
+        <Button
+            android:id="@+id/refreshDevicesButton"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
+            android:layout_marginTop="12dp"
+            android:text="@string/refresh_devices" />
+
+        <Button
+            android:id="@+id/openBluetoothSettingsButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/open_bluetooth_settings" />
+
+        <TextView
+            android:id="@+id/emptyDevicesText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
+            android:gravity="center"
+            android:text="@string/no_bonded_devices"
+            android:textColor="@color/text_secondary"
             android:visibility="gone" />
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/deviceListRecyclerView"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="12dp"
             android:layout_weight="1" />
-
     </LinearLayout>
 
-    <!-- Connection Screen -->
+    <!-- Connecting -->
     <LinearLayout
         android:id="@+id/connectionContainer"
         android:layout_width="0dp"
@@ -73,64 +136,61 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/statusText">
 
-        <Button
-            android:id="@+id/connectButton"
-            android:layout_width="match_parent"
+        <ProgressBar
+            android:id="@+id/connectionProgressBar"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Bağlan"
-            android:textSize="18sp" />
+            android:layout_gravity="center" />
 
         <Button
             android:id="@+id/retryButton"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="16dp"
-            android:text="Tekrar Dene"
-            android:textSize="18sp"
+            android:text="@string/retry"
             android:visibility="gone" />
 
-        <ProgressBar
-            android:id="@+id/connectionProgressBar"
-            android:layout_width="wrap_content"
+        <Button
+            android:id="@+id/repairHintButton"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_gravity="center"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="8dp"
+            android:text="@string/repair_pairing"
             android:visibility="gone" />
 
+        <Button
+            android:id="@+id/cancelConnectButton"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@string/cancel" />
     </LinearLayout>
 
-    <!-- Input Screen (D-Pad + Enter) -->
-    <LinearLayout
+    <!-- Remote -->
+    <ScrollView
         android:id="@+id/inputContainer"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:gravity="center"
-        android:orientation="vertical"
-        android:padding="20dp"
         android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/statusText">
 
-        <!-- D-Pad -->
         <LinearLayout
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:gravity="center_horizontal"
             android:orientation="vertical"
-            android:gravity="center">
+            android:padding="20dp">
 
-            <!-- UP Button -->
             <Button
                 android:id="@+id/upButton"
                 android:layout_width="120dp"
-                android:layout_height="80dp"
-                android:text="UP"
-                android:textSize="18sp"
-            android:textStyle="bold"
-                android:enabled="false" />
+                android:layout_height="72dp"
+                android:text="@string/key_up"
+                android:textStyle="bold" />
 
-            <!-- LEFT and RIGHT Buttons -->
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
@@ -139,101 +199,101 @@
                 <Button
                     android:id="@+id/leftButton"
                     android:layout_width="120dp"
-                    android:layout_height="80dp"
+                    android:layout_height="72dp"
                     android:layout_marginEnd="8dp"
-                    android:text="LEFT"
-            android:textSize="18sp"
-            android:textStyle="bold"
-                    android:enabled="false" />
+                    android:text="@string/key_left"
+                    android:textStyle="bold" />
 
                 <Button
                     android:id="@+id/rightButton"
                     android:layout_width="120dp"
-                    android:layout_height="80dp"
+                    android:layout_height="72dp"
                     android:layout_marginStart="8dp"
-                    android:text="RIGHT"
-            android:textSize="18sp"
-            android:textStyle="bold"
-                    android:enabled="false" />
-
+                    android:text="@string/key_right"
+                    android:textStyle="bold" />
             </LinearLayout>
 
-            <!-- DOWN Button -->
             <Button
                 android:id="@+id/downButton"
                 android:layout_width="120dp"
-                android:layout_height="80dp"
+                android:layout_height="72dp"
                 android:layout_marginTop="8dp"
-                android:text="DOWN"
-            android:textSize="18sp"
-            android:textStyle="bold"
-                android:enabled="false" />
+                android:text="@string/key_down"
+                android:textStyle="bold" />
 
-        </LinearLayout>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:orientation="horizontal">
 
-        <!-- SPACE Button -->
-        <Button
-            android:id="@+id/enterButton"
-            android:layout_width="match_parent"
-            android:layout_height="100dp"
-            android:layout_marginTop="32dp"
-            android:text="SPACE"
-            android:textSize="24sp"
-            android:textStyle="bold"
-            android:enabled="false" />
+                <Button
+                    android:id="@+id/spaceButton"
+                    android:layout_width="0dp"
+                    android:layout_height="72dp"
+                    android:layout_marginEnd="8dp"
+                    android:layout_weight="1"
+                    android:text="@string/key_space"
+                    android:textStyle="bold" />
 
-        <!-- F (Fullscreen) Button -->
-        <Button
-            android:id="@+id/fullscreenButton"
-            android:layout_width="match_parent"
-            android:layout_height="80dp"
-            android:layout_marginTop="16dp"
-            android:text="F (Tam Ekran)"
-            android:textSize="20sp"
-            android:textStyle="bold"
-            android:enabled="false" />
-
-        <!-- Brightness Controls -->
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
-            android:orientation="horizontal"
-            android:gravity="center">
+                <Button
+                    android:id="@+id/escButton"
+                    android:layout_width="0dp"
+                    android:layout_height="72dp"
+                    android:layout_marginStart="8dp"
+                    android:layout_weight="1"
+                    android:text="@string/key_esc"
+                    android:textStyle="bold" />
+            </LinearLayout>
 
             <Button
-                android:id="@+id/brightnessDownButton"
-                android:layout_width="0dp"
-                android:layout_height="80dp"
-                android:layout_weight="1"
-                android:layout_marginEnd="8dp"
-                android:text="Parlaklık -"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:enabled="false" />
+                android:id="@+id/fullscreenButton"
+                android:layout_width="match_parent"
+                android:layout_height="72dp"
+                android:layout_marginTop="12dp"
+                android:text="@string/key_fullscreen"
+                android:textStyle="bold" />
 
             <Button
-                android:id="@+id/brightnessUpButton"
-                android:layout_width="0dp"
-                android:layout_height="80dp"
-                android:layout_weight="1"
-                android:layout_marginStart="8dp"
-                android:text="Parlaklık +"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:enabled="false" />
+                android:id="@+id/playPauseButton"
+                android:layout_width="match_parent"
+                android:layout_height="72dp"
+                android:layout_marginTop="12dp"
+                android:text="@string/key_play_pause"
+                android:textStyle="bold" />
 
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:orientation="horizontal">
+
+                <Button
+                    android:id="@+id/volumeDownButton"
+                    android:layout_width="0dp"
+                    android:layout_height="72dp"
+                    android:layout_marginEnd="8dp"
+                    android:layout_weight="1"
+                    android:text="@string/key_vol_down"
+                    android:textStyle="bold" />
+
+                <Button
+                    android:id="@+id/volumeUpButton"
+                    android:layout_width="0dp"
+                    android:layout_height="72dp"
+                    android:layout_marginStart="8dp"
+                    android:layout_weight="1"
+                    android:text="@string/key_vol_up"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+            <Button
+                android:id="@+id/disconnectButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:text="@string/disconnect" />
         </LinearLayout>
-
-        <!-- Disconnect Button -->
-        <Button
-            android:id="@+id/disconnectButton"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
-            android:text="Bağlantıyı Kes"
-            android:textSize="16sp" />
-
-    </LinearLayout>
+    </ScrollView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -13,6 +13,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "BluetoothKeyboard"
+rootProject.name = "PController"
 include(":app")
 
