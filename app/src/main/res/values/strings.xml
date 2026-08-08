@@ -28,6 +28,22 @@
     <string name="repair_dialog_message">Windows HID önbelleği eski kalmış olabilir.\n\n1) Windows’ta bu telefonu kaldırın\n2) Telefonda PC eşleşmesini silin\n3) Yeniden eşleştirin\n4) PController’da tekrar bağlanın</string>
     <string name="repair_open_settings">Bluetooth ayarlarını aç</string>
 
+    <string name="platform_pick_title">Kumanda modu seç</string>
+    <string name="platform_pick_hint">Özel kısayolu bilinen yerler için ayrı mod; gerisi Web/Film veya Genel ile çalışır. PC, tablet, TV kutusu — HID kabul eden her Bluetooth host.</string>
+    <string name="platform_change">Modu değiştir</string>
+    <string name="platform_web">Web / Film</string>
+    <string name="platform_web_sub">HBO Max, tarayıcı, HTML5 oynatıcı — Space, oklar, Tam Ekran</string>
+    <string name="platform_youtube">YouTube</string>
+    <string name="platform_youtube_sub">−10/Play/+10, oklarla ±5 sn, liste için Önceki/Sonraki</string>
+    <string name="platform_netflix">Netflix</string>
+    <string name="platform_netflix_sub">Tam ekran, OK, altyazı</string>
+    <string name="platform_spotify">Spotify</string>
+    <string name="platform_spotify_sub">Önceki / Play / Sonraki, ses, mute</string>
+    <string name="platform_presentation">Sunum</string>
+    <string name="platform_presentation_sub">Başlat (F5), slayt okları, siyah ekran</string>
+    <string name="platform_general">Genel / Tablet</string>
+    <string name="platform_general_sub">Her HID host: PC, tablet, TV — D-Pad, Space, Esc, Vol</string>
+
     <string name="key_up">↑</string>
     <string name="key_down">↓</string>
     <string name="key_left">←</string>
@@ -37,7 +53,20 @@
     <string name="pair_short">Eşleştir</string>
     <string name="setup_title">Baglanti kurulumu</string>
     <string name="key_play_symbol">Play</string>
+    <string name="key_play_pause">Play/Pause</string>
     <string name="key_fullscreen">Tam Ekran</string>
-    <string name="key_vol_down">Vol -</string>
-    <string name="key_vol_up">Vol +</string>
+    <string name="key_vol_down">V−</string>
+    <string name="key_vol_up">V+</string>
+    <string name="key_ok">OK</string>
+    <string name="key_prev">Önceki</string>
+    <string name="key_next">Sonraki</string>
+    <string name="key_seek_back">−</string>
+    <string name="key_seek_fwd">+</string>
+    <string name="key_seek_back_10">−10 sn</string>
+    <string name="key_seek_fwd_10">+10 sn</string>
+    <string name="key_mute">Sessiz</string>
+    <string name="key_subtitle">Altyazı</string>
+    <string name="key_start_presentation">Başlat</string>
+    <string name="key_black_screen">Siyah ekran</string>
+    <string name="key_next_slide">İleri</string>
 </resources>

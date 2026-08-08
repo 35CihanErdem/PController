@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/bg_top"
+    android:background="@drawable/bg_app"
     tools:context=".ui.MainActivity">
 
     <TextView
@@ -239,6 +239,55 @@
             android:text="@string/cancel" />
     </LinearLayout>
 
+    <!-- Platform seçimi (bağlandıktan sonra) -->
+    <LinearLayout
+        android:id="@+id/platformSelectionContainer"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:orientation="vertical"
+        android:paddingLeft="20dp"
+        android:paddingTop="12dp"
+        android:paddingRight="20dp"
+        android:paddingBottom="12dp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/statusChip">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/platform_pick_title"
+            android:textColor="@color/text_primary"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="@string/platform_pick_hint"
+            android:textColor="@color/text_secondary"
+            android:textSize="13sp" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/platformListRecyclerView"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginTop="14dp"
+            android:layout_weight="1"
+            android:clipToPadding="false" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/disconnectFromPlatformButton"
+            style="@style/RemoteGhostButton"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginTop="8dp"
+            android:text="@string/disconnect" />
+    </LinearLayout>
+
     <ScrollView
         android:id="@+id/inputContainer"
         android:layout_width="0dp"
@@ -260,13 +309,69 @@
             android:paddingTop="8dp"
             android:paddingRight="20dp">
 
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/changePlatformButton"
+                style="@style/RemoteGhostButton"
+                android:layout_width="match_parent"
+                android:layout_height="44dp"
+                android:text="@string/platform_change" />
+
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/topPrimaryButton"
+                style="@style/RemotePrimaryKey"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:layout_marginTop="8dp"
+                android:text="@string/key_fullscreen"
+                android:visibility="gone" />
+
             <LinearLayout
+                android:id="@+id/mediaRow"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:orientation="horizontal"
+                android:visibility="gone">
+
+                <androidx.appcompat.widget.AppCompatButton
+                    android:id="@+id/mediaPrevButton"
+                    style="@style/RemoteActionKey"
+                    android:layout_width="0dp"
+                    android:layout_height="56dp"
+                    android:layout_marginEnd="4dp"
+                    android:layout_weight="1"
+                    android:text="@string/key_prev" />
+
+                <androidx.appcompat.widget.AppCompatButton
+                    android:id="@+id/mediaPlayButton"
+                    style="@style/RemoteActionKey"
+                    android:layout_width="0dp"
+                    android:layout_height="56dp"
+                    android:layout_marginLeft="4dp"
+                    android:layout_marginRight="4dp"
+                    android:layout_weight="1"
+                    android:text="@string/key_play_symbol" />
+
+                <androidx.appcompat.widget.AppCompatButton
+                    android:id="@+id/mediaNextButton"
+                    style="@style/RemoteActionKey"
+                    android:layout_width="0dp"
+                    android:layout_height="56dp"
+                    android:layout_marginStart="4dp"
+                    android:layout_weight="1"
+                    android:text="@string/key_next" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/dpadPanel"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
                 android:background="@drawable/bg_panel"
                 android:gravity="center"
                 android:orientation="vertical"
-                android:padding="18dp">
+                android:padding="18dp"
+                android:visibility="gone">
 
                 <androidx.appcompat.widget.AppCompatButton
                     android:id="@+id/upButton"
@@ -286,12 +391,12 @@
                         android:text="@string/key_left" />
 
                     <androidx.appcompat.widget.AppCompatButton
-                        android:id="@+id/playPauseButton"
+                        android:id="@+id/centerButton"
                         style="@style/RemoteDpadKey"
                         android:layout_marginLeft="8dp"
                         android:layout_marginRight="8dp"
-                        android:text="@string/key_play_symbol"
-                        android:textSize="16sp" />
+                        android:text="@string/key_ok"
+                        android:textSize="14sp" />
 
                     <androidx.appcompat.widget.AppCompatButton
                         android:id="@+id/rightButton"
@@ -307,13 +412,15 @@
             </LinearLayout>
 
             <LinearLayout
+                android:id="@+id/rowA"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="16dp"
-                android:orientation="horizontal">
+                android:layout_marginTop="12dp"
+                android:orientation="horizontal"
+                android:visibility="gone">
 
                 <androidx.appcompat.widget.AppCompatButton
-                    android:id="@+id/spaceButton"
+                    android:id="@+id/rowALeftButton"
                     style="@style/RemoteActionKey"
                     android:layout_width="0dp"
                     android:layout_height="56dp"
@@ -322,7 +429,7 @@
                     android:text="@string/key_space" />
 
                 <androidx.appcompat.widget.AppCompatButton
-                    android:id="@+id/escButton"
+                    android:id="@+id/rowARightButton"
                     style="@style/RemoteActionKey"
                     android:layout_width="0dp"
                     android:layout_height="56dp"
@@ -331,22 +438,16 @@
                     android:text="@string/key_esc" />
             </LinearLayout>
 
-            <androidx.appcompat.widget.AppCompatButton
-                android:id="@+id/fullscreenButton"
-                style="@style/RemotePrimaryKey"
-                android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:layout_marginTop="10dp"
-                android:text="@string/key_fullscreen" />
-
             <LinearLayout
+                android:id="@+id/rowB"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="10dp"
-                android:orientation="horizontal">
+                android:orientation="horizontal"
+                android:visibility="gone">
 
                 <androidx.appcompat.widget.AppCompatButton
-                    android:id="@+id/volumeDownButton"
+                    android:id="@+id/rowBLeftButton"
                     style="@style/RemoteActionKey"
                     android:layout_width="0dp"
                     android:layout_height="56dp"
@@ -355,7 +456,7 @@
                     android:text="@string/key_vol_down" />
 
                 <androidx.appcompat.widget.AppCompatButton
-                    android:id="@+id/volumeUpButton"
+                    android:id="@+id/rowBRightButton"
                     style="@style/RemoteActionKey"
                     android:layout_width="0dp"
                     android:layout_height="56dp"
@@ -363,6 +464,14 @@
                     android:layout_weight="1"
                     android:text="@string/key_vol_up" />
             </LinearLayout>
+
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/extraButton"
+                style="@style/RemotePrimaryKey"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:layout_marginTop="10dp"
+                android:visibility="gone" />
 
             <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/disconnectButton"

@@ -18,6 +18,18 @@ object HidReports {
     /** Play/Pause */
     const val USAGE_PLAY_PAUSE = 0x00CD
 
+    /** Scan Next Track */
+    const val USAGE_SCAN_NEXT = 0x00B5
+
+    /** Scan Previous Track */
+    const val USAGE_SCAN_PREVIOUS = 0x00B6
+
+    /** Mute */
+    const val USAGE_MUTE = 0x00E2
+
+    /** Left Shift modifier bit in keyboard report byte 0 */
+    const val MOD_LEFT_SHIFT = 0x02
+
     fun descriptor(): ByteArray = byteArrayOf(
         // Keyboard Collection (Report ID 1)
         0x05.toByte(), 0x01.toByte(),        // Usage Page (Generic Desktop)
@@ -69,8 +81,10 @@ object HidReports {
         0xc0.toByte()                        // End Collection
     )
 
-    fun keyboardReport(keyCode: KeyCode): ByteArray {
+    fun keyboardReport(keyCode: KeyCode, modifiers: Int = 0): ByteArray {
         val report = ByteArray(8)
+        // Modifier byte her zaman parametreden — Shift-only basış (key=NONE, mod≠0) için şart
+        report[0] = modifiers.toByte()
         report[2] = when (keyCode) {
             KeyCode.UP_ARROW -> 0x52.toByte()
             KeyCode.DOWN_ARROW -> 0x51.toByte()
@@ -78,7 +92,18 @@ object HidReports {
             KeyCode.RIGHT_ARROW -> 0x4F.toByte()
             KeyCode.SPACE -> 0x2C.toByte()
             KeyCode.ESC -> 0x29.toByte()
+            KeyCode.ENTER -> 0x28.toByte()
             KeyCode.F -> 0x09.toByte()
+            KeyCode.F5 -> 0x3E.toByte()
+            KeyCode.F11 -> 0x44.toByte()
+            KeyCode.B -> 0x05.toByte()
+            KeyCode.C -> 0x06.toByte()
+            KeyCode.J -> 0x0D.toByte()
+            KeyCode.K -> 0x0E.toByte()
+            KeyCode.L -> 0x0F.toByte()
+            KeyCode.M -> 0x10.toByte()
+            KeyCode.N -> 0x11.toByte()
+            KeyCode.P -> 0x13.toByte()
             KeyCode.NONE -> 0x00
         }
         return report
@@ -95,6 +120,9 @@ object HidReports {
         ConsumerAction.VOLUME_UP -> consumerReport(USAGE_VOLUME_UP)
         ConsumerAction.VOLUME_DOWN -> consumerReport(USAGE_VOLUME_DOWN)
         ConsumerAction.PLAY_PAUSE -> consumerReport(USAGE_PLAY_PAUSE)
+        ConsumerAction.SCAN_NEXT -> consumerReport(USAGE_SCAN_NEXT)
+        ConsumerAction.SCAN_PREVIOUS -> consumerReport(USAGE_SCAN_PREVIOUS)
+        ConsumerAction.MUTE -> consumerReport(USAGE_MUTE)
         ConsumerAction.NONE -> consumerReport(0)
     }
 }

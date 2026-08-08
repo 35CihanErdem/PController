@@ -8,7 +8,19 @@ enum class KeyCode {
     RIGHT_ARROW,
     SPACE,
     ESC,
+    ENTER,
     F,
+    F5,
+    F11,
+    /** Letters — YouTube/Netflix kısayolları */
+    B,
+    C,
+    J,
+    K,
+    L,
+    M,
+    N,
+    P,
     NONE
 }
 
@@ -17,5 +29,8 @@ enum class ConsumerAction {
     VOLUME_UP,
     VOLUME_DOWN,
     PLAY_PAUSE,
+    SCAN_NEXT,
+    SCAN_PREVIOUS,
+    MUTE,
     NONE
 }

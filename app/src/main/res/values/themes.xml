@@ -6,12 +6,11 @@
         <item name="colorAccent">@color/accent</item>
         <item name="android:statusBarColor">@color/bg_top</item>
         <item name="android:navigationBarColor">@color/bg_bottom</item>
-        <item name="android:windowBackground">@color/bg_top</item>
-        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowBackground">@drawable/bg_app</item>
+        <item name="android:windowLightStatusBar">true</item>
         <item name="buttonStyle">@style/RemoteActionKey</item>
     </style>
 
-    <!-- AppCompat button — Material TextButton + custom background crashes on many OEMs -->
     <style name="RemoteDpadKey" parent="Widget.AppCompat.Button">
         <item name="android:layout_width">76dp</item>
         <item name="android:layout_height">76dp</item>
@@ -38,7 +37,7 @@
     <style name="RemotePrimaryKey" parent="Widget.AppCompat.Button">
         <item name="android:layout_height">56dp</item>
         <item name="android:background">@drawable/bg_remote_key_accent</item>
-        <item name="android:textColor">@color/bg_top</item>
+        <item name="android:textColor">@color/on_accent</item>
         <item name="android:textSize">15sp</item>
         <item name="android:textStyle">bold</item>
         <item name="android:textAllCaps">false</item>

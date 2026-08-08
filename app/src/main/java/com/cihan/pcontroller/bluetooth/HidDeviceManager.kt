@@ -15,6 +15,7 @@ import android.os.Handler
 import android.os.Looper
 import android.util.Log
 import androidx.core.content.ContextCompat
+import com.cihan.pcontroller.domain.HidCommand
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -27,7 +28,8 @@ class HidDeviceManager(
 ) {
     companion object {
         private const val TAG = "HidDeviceManager"
-        private const val KEY_RELEASE_MS = 100L
+        private const val KEY_RELEASE_MS = 120L
+        private const val KEY_MODIFIER_STEP_MS = 30L
         private const val CONSUMER_RELEASE_MS = 120L
         private const val CONNECT_RETRY_DELAY_MS = 800L
         private const val MAX_CONNECT_ATTEMPTS = 3
@@ -52,6 +54,8 @@ class HidDeviceManager(
     private var connectTimeoutRunnable: Runnable? = null
     private var retryRunnable: Runnable? = null
     private var disconnectConfirmRunnable: Runnable? = null
+    private var keyReleaseRunnable: Runnable? = null
+    private var consumerReleaseRunnable: Runnable? = null
     private var connectGeneration: Int = 0
 
     private val profileListener = object : BluetoothProfile.ServiceListener {
@@ -257,9 +261,9 @@ class HidDeviceManager(
             if (isAppRegistered) ConnectionState.Registered else ConnectionState.Idle
     }
 
-    fun sendKey(keyCode: KeyCode) {
+    fun sendKey(keyCode: KeyCode, modifiers: Int = 0) {
         if (keyCode == KeyCode.NONE) return
-        sendKeyboardPulse(keyCode)
+        sendKeyboardPulse(keyCode, modifiers)
     }
 
     fun sendVolumeUp() = sendConsumerPulse(ConsumerAction.VOLUME_UP)
@@ -267,6 +271,18 @@ class HidDeviceManager(
     fun sendVolumeDown() = sendConsumerPulse(ConsumerAction.VOLUME_DOWN)
 
     fun sendPlayPause() = sendConsumerPulse(ConsumerAction.PLAY_PAUSE)
+
+    fun sendConsumer(action: ConsumerAction) {
+        if (action == ConsumerAction.NONE) return
+        sendConsumerPulse(action)
+    }
+
+    fun sendCommand(command: HidCommand) {
+        when (command) {
+            is HidCommand.Key -> sendKey(command.key, command.modifiers)
+            is HidCommand.Consumer -> sendConsumer(command.action)
+        }
+    }
 
     fun release() {
         isReleased = true
@@ -552,45 +568,82 @@ class HidDeviceManager(
         }
     }
 
-    private fun sendKeyboardPulse(keyCode: KeyCode) {
+    private fun sendKeyboardPulse(keyCode: KeyCode, modifiers: Int = 0) {
         val hid = hidDevice
         val target = connectedDevice
         if (hid == null || target == null || !hasConnectPermission()) return
+
+        // Önceki release'i iptal et — hızlı basışta tuş yarışını keser
+        keyReleaseRunnable?.let { mainHandler.removeCallbacks(it) }
+        keyReleaseRunnable = null
+
         try {
-            hid.sendReport(
-                target,
-                HidReports.REPORT_ID_KEYBOARD,
-                HidReports.keyboardReport(keyCode)
-            )
-            mainHandler.postDelayed({
-                try {
-                    if (connectedDevice == target && hasConnectPermission()) {
+            // Modifier varsa önce Shift basılı (Windows/YouTube daha güvenilir)
+            if (modifiers != 0) {
+                hid.sendReport(
+                    target,
+                    HidReports.REPORT_ID_KEYBOARD,
+                    HidReports.keyboardReport(KeyCode.NONE, modifiers)
+                )
+                mainHandler.postDelayed({
+                    if (connectedDevice != target || !hasConnectPermission()) return@postDelayed
+                    try {
                         hid.sendReport(
                             target,
                             HidReports.REPORT_ID_KEYBOARD,
-                            HidReports.keyboardReport(KeyCode.NONE)
+                            HidReports.keyboardReport(keyCode, modifiers)
                         )
+                        scheduleKeyRelease(hid, target)
+                    } catch (e: Exception) {
+                        Log.e(TAG, "sendKey mod+key", e)
                     }
-                } catch (e: Exception) {
-                    Log.e(TAG, "key release", e)
-                }
-            }, KEY_RELEASE_MS)
+                }, KEY_MODIFIER_STEP_MS)
+            } else {
+                hid.sendReport(
+                    target,
+                    HidReports.REPORT_ID_KEYBOARD,
+                    HidReports.keyboardReport(keyCode, 0)
+                )
+                scheduleKeyRelease(hid, target)
+            }
         } catch (e: Exception) {
             Log.e(TAG, "sendKey", e)
         }
+    }
+
+    private fun scheduleKeyRelease(hid: BluetoothHidDevice, target: BluetoothDevice) {
+        val release = Runnable {
+            try {
+                if (connectedDevice == target && hasConnectPermission()) {
+                    hid.sendReport(
+                        target,
+                        HidReports.REPORT_ID_KEYBOARD,
+                        HidReports.keyboardReport(KeyCode.NONE)
+                    )
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "key release", e)
+            } finally {
+                keyReleaseRunnable = null
+            }
+        }
+        keyReleaseRunnable = release
+        mainHandler.postDelayed(release, KEY_RELEASE_MS)
     }
 
     private fun sendConsumerPulse(action: ConsumerAction) {
         val hid = hidDevice
         val target = connectedDevice
         if (hid == null || target == null || !hasConnectPermission()) return
+        consumerReleaseRunnable?.let { mainHandler.removeCallbacks(it) }
+        consumerReleaseRunnable = null
         try {
             hid.sendReport(
                 target,
                 HidReports.REPORT_ID_CONSUMER,
                 HidReports.consumerReport(action)
             )
-            mainHandler.postDelayed({
+            val release = Runnable {
                 try {
                     if (connectedDevice == target && hasConnectPermission()) {
                         hid.sendReport(
@@ -601,8 +654,12 @@ class HidDeviceManager(
                     }
                 } catch (e: Exception) {
                     Log.e(TAG, "consumer release", e)
+                } finally {
+                    consumerReleaseRunnable = null
                 }
-            }, CONSUMER_RELEASE_MS)
+            }
+            consumerReleaseRunnable = release
+            mainHandler.postDelayed(release, CONSUMER_RELEASE_MS)
         } catch (e: Exception) {
             Log.e(TAG, "sendConsumer", e)
         }

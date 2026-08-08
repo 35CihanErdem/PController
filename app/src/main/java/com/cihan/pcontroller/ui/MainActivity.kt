@@ -27,7 +27,9 @@ import androidx.recyclerview.widget.RecyclerView
 import com.cihan.pcontroller.R
 import com.cihan.pcontroller.bluetooth.BondedDevice
 import com.cihan.pcontroller.bluetooth.ConnectionState
-import com.cihan.pcontroller.bluetooth.KeyCode
+import com.cihan.pcontroller.domain.PlatformProfile
+import com.cihan.pcontroller.domain.RemoteAction
+import com.cihan.pcontroller.domain.RemoteButtonSpec
 import com.cihan.pcontroller.service.BluetoothHidService
 import com.cihan.pcontroller.util.PermissionHelper
 import kotlinx.coroutines.Job
@@ -62,31 +64,46 @@ class MainActivity : AppCompatActivity() {
     private lateinit var repairHintButton: Button
     private lateinit var cancelConnectButton: Button
 
+    private lateinit var platformSelectionContainer: LinearLayout
+    private lateinit var platformListRecyclerView: RecyclerView
+    private lateinit var disconnectFromPlatformButton: Button
+
     private lateinit var inputContainer: ScrollView
+    private lateinit var changePlatformButton: Button
+    private lateinit var topPrimaryButton: Button
+    private lateinit var mediaRow: LinearLayout
+    private lateinit var mediaPrevButton: Button
+    private lateinit var mediaPlayButton: Button
+    private lateinit var mediaNextButton: Button
+    private lateinit var dpadPanel: LinearLayout
     private lateinit var upButton: Button
     private lateinit var downButton: Button
     private lateinit var leftButton: Button
     private lateinit var rightButton: Button
-    private lateinit var spaceButton: Button
-    private lateinit var escButton: Button
-    private lateinit var fullscreenButton: Button
-    private lateinit var playPauseButton: Button
-    private lateinit var volumeUpButton: Button
-    private lateinit var volumeDownButton: Button
+    private lateinit var centerButton: Button
+    private lateinit var rowA: LinearLayout
+    private lateinit var rowALeftButton: Button
+    private lateinit var rowARightButton: Button
+    private lateinit var rowB: LinearLayout
+    private lateinit var rowBLeftButton: Button
+    private lateinit var rowBRightButton: Button
+    private lateinit var extraButton: Button
     private lateinit var disconnectButton: Button
 
     private var hidService: BluetoothHidService? = null
     private var bound = false
     private var stateJob: Job? = null
     private var connectRequestedAddress: String? = null
-    /** True between user tap-connect and Connected/Failed/cancel. */
     private var awaitingConnection = false
-    /** Servis state'i gelene kadar cihaz listesine düşme (bildirimden dönüş). */
     private var syncingServiceState = false
 
     private val deviceAdapter = BondedDeviceAdapter { device ->
         viewModel.selectDevice(device)
         connectTo(device.address)
+    }
+
+    private val platformAdapter = PlatformAdapter { profile ->
+        viewModel.selectPlatform(profile.id)
     }
 
     private val enableBtLauncher = registerForActivityResult(
@@ -144,6 +161,9 @@ class MainActivity : AppCompatActivity() {
             setupListeners()
             deviceListRecyclerView.layoutManager = LinearLayoutManager(this)
             deviceListRecyclerView.adapter = deviceAdapter
+            platformListRecyclerView.layoutManager = LinearLayoutManager(this)
+            platformListRecyclerView.adapter = platformAdapter
+            platformAdapter.submit(viewModel.uiState.value.platforms)
             handleOpenIntent(intent)
 
             lifecycleScope.launch {
@@ -167,7 +187,6 @@ class MainActivity : AppCompatActivity() {
     override fun onStart() {
         super.onStart()
         viewModel.refreshSetup()
-        // Bildirimden / geri dönüşte çalışan servise bağlan → Connected ekranı gelsin
         tryBindExistingService()
         val conn = viewModel.uiState.value.connection
         if (conn is ConnectionState.Connected || awaitingConnection) {
@@ -216,17 +235,30 @@ class MainActivity : AppCompatActivity() {
         repairHintButton = findViewById(R.id.repairHintButton)
         cancelConnectButton = findViewById(R.id.cancelConnectButton)
 
+        platformSelectionContainer = findViewById(R.id.platformSelectionContainer)
+        platformListRecyclerView = findViewById(R.id.platformListRecyclerView)
+        disconnectFromPlatformButton = findViewById(R.id.disconnectFromPlatformButton)
+
         inputContainer = findViewById(R.id.inputContainer)
+        changePlatformButton = findViewById(R.id.changePlatformButton)
+        topPrimaryButton = findViewById(R.id.topPrimaryButton)
+        mediaRow = findViewById(R.id.mediaRow)
+        mediaPrevButton = findViewById(R.id.mediaPrevButton)
+        mediaPlayButton = findViewById(R.id.mediaPlayButton)
+        mediaNextButton = findViewById(R.id.mediaNextButton)
+        dpadPanel = findViewById(R.id.dpadPanel)
         upButton = findViewById(R.id.upButton)
         downButton = findViewById(R.id.downButton)
         leftButton = findViewById(R.id.leftButton)
         rightButton = findViewById(R.id.rightButton)
-        spaceButton = findViewById(R.id.spaceButton)
-        escButton = findViewById(R.id.escButton)
-        fullscreenButton = findViewById(R.id.fullscreenButton)
-        playPauseButton = findViewById(R.id.playPauseButton)
-        volumeUpButton = findViewById(R.id.volumeUpButton)
-        volumeDownButton = findViewById(R.id.volumeDownButton)
+        centerButton = findViewById(R.id.centerButton)
+        rowA = findViewById(R.id.rowA)
+        rowALeftButton = findViewById(R.id.rowALeftButton)
+        rowARightButton = findViewById(R.id.rowARightButton)
+        rowB = findViewById(R.id.rowB)
+        rowBLeftButton = findViewById(R.id.rowBLeftButton)
+        rowBRightButton = findViewById(R.id.rowBRightButton)
+        extraButton = findViewById(R.id.extraButton)
         disconnectButton = findViewById(R.id.disconnectButton)
     }
 
@@ -246,29 +278,79 @@ class MainActivity : AppCompatActivity() {
             viewModel.uiState.value.selectedAddress?.let { connectTo(it) }
         }
         repairHintButton.setOnClickListener { showRepairDialog() }
-        cancelConnectButton.setOnClickListener {
-            awaitingConnection = false
-            hidService?.disconnect()
-            viewModel.clearSelection()
-            viewModel.refreshSetup()
+        cancelConnectButton.setOnClickListener { disconnectAndReset() }
+        disconnectButton.setOnClickListener { disconnectAndReset() }
+        disconnectFromPlatformButton.setOnClickListener { disconnectAndReset() }
+        changePlatformButton.setOnClickListener { viewModel.clearPlatformSelection() }
+    }
+
+    private fun disconnectAndReset() {
+        awaitingConnection = false
+        hidService?.disconnect()
+        viewModel.clearSelection()
+        viewModel.refreshSetup()
+    }
+
+    private fun sendAction(action: RemoteAction) {
+        hidService?.sendAction(action)
+    }
+
+    private fun bindSpec(button: Button, spec: RemoteButtonSpec?) {
+        if (spec == null || !spec.visible) {
+            button.visibility = View.GONE
+            button.setOnClickListener(null)
+            return
         }
-        disconnectButton.setOnClickListener {
-            awaitingConnection = false
-            hidService?.disconnect()
-            viewModel.clearSelection()
-            viewModel.refreshSetup()
+        button.visibility = View.VISIBLE
+        button.setText(spec.labelRes)
+        button.setOnClickListener { sendAction(spec.action) }
+    }
+
+    private fun applyRemoteLayout(profile: PlatformProfile) {
+        val layout = profile.layout
+        changePlatformButton.text =
+            getString(R.string.platform_change) + " · " + getString(profile.titleRes)
+
+        bindSpec(topPrimaryButton, layout.topPrimary)
+
+        val media = layout.mediaRow
+        if (media == null) {
+            mediaRow.visibility = View.GONE
+        } else {
+            mediaRow.visibility = View.VISIBLE
+            bindSpec(mediaPrevButton, media.first)
+            bindSpec(mediaPlayButton, media.second)
+            bindSpec(mediaNextButton, media.third)
         }
 
-        upButton.setOnClickListener { hidService?.sendKey(KeyCode.UP_ARROW) }
-        downButton.setOnClickListener { hidService?.sendKey(KeyCode.DOWN_ARROW) }
-        leftButton.setOnClickListener { hidService?.sendKey(KeyCode.LEFT_ARROW) }
-        rightButton.setOnClickListener { hidService?.sendKey(KeyCode.RIGHT_ARROW) }
-        spaceButton.setOnClickListener { hidService?.sendKey(KeyCode.SPACE) }
-        escButton.setOnClickListener { hidService?.sendKey(KeyCode.ESC) }
-        fullscreenButton.setOnClickListener { hidService?.sendKey(KeyCode.F) }
-        playPauseButton.setOnClickListener { hidService?.sendPlayPause() }
-        volumeUpButton.setOnClickListener { hidService?.sendVolumeUp() }
-        volumeDownButton.setOnClickListener { hidService?.sendVolumeDown() }
+        val hasDpad = layout.dpadUp != null || layout.dpadLeft != null ||
+            layout.dpadCenter != null || layout.dpadRight != null || layout.dpadDown != null
+        dpadPanel.visibility = if (hasDpad) View.VISIBLE else View.GONE
+        bindSpec(upButton, layout.dpadUp)
+        bindSpec(leftButton, layout.dpadLeft)
+        bindSpec(centerButton, layout.dpadCenter)
+        bindSpec(rightButton, layout.dpadRight)
+        bindSpec(downButton, layout.dpadDown)
+
+        val a = layout.rowA
+        if (a == null) {
+            rowA.visibility = View.GONE
+        } else {
+            rowA.visibility = View.VISIBLE
+            bindSpec(rowALeftButton, a.first)
+            bindSpec(rowARightButton, a.second)
+        }
+
+        val b = layout.rowB
+        if (b == null) {
+            rowB.visibility = View.GONE
+        } else {
+            rowB.visibility = View.VISIBLE
+            bindSpec(rowBLeftButton, b.first)
+            bindSpec(rowBRightButton, b.second)
+        }
+
+        bindSpec(extraButton, layout.extra)
     }
 
     private fun ensureServiceBound() {
@@ -286,7 +368,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    /** Servis zaten çalışıyorsa (bildirim) AUTO_CREATE olmadan bağlan — Connected state gelsin. */
     private fun tryBindExistingService() {
         if (bound) return
         if (!PermissionHelper.hasBluetoothPermissions(this)) {
@@ -303,7 +384,6 @@ class MainActivity : AppCompatActivity() {
             if (!started) {
                 syncingServiceState = false
             } else {
-                // onServiceConnected async; kısa süre cihaz listesine düşme
                 syncingServiceState = true
                 window.decorView.postDelayed({
                     if (syncingServiceState && !bound) {
@@ -330,7 +410,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    /** Tek connect yolu: binder hazır olunca bir kez connect. Intent ile ikinci connect yok. */
     private fun connectTo(address: String) {
         awaitingConnection = true
         connectRequestedAddress = address
@@ -382,14 +461,23 @@ class MainActivity : AppCompatActivity() {
             is ConnectionState.Connected -> {
                 awaitingConnection = false
                 hideAllPanels()
-                inputContainer.visibility = View.VISIBLE
-                setStatus(
-                    getString(
-                        R.string.status_connected,
-                        connection.deviceName ?: connection.deviceAddress
-                    ),
-                    connected = true
-                )
+                val deviceLabel = connection.deviceName ?: connection.deviceAddress
+                if (state.activePlatformId == null) {
+                    platformSelectionContainer.visibility = View.VISIBLE
+                    setStatus(
+                        getString(R.string.status_connected, deviceLabel),
+                        connected = true
+                    )
+                } else {
+                    val profile = state.activeProfile ?: return
+                    inputContainer.visibility = View.VISIBLE
+                    applyRemoteLayout(profile)
+                    setStatus(
+                        getString(R.string.status_connected, deviceLabel) +
+                            " · " + getString(profile.titleRes),
+                        connected = true
+                    )
+                }
             }
             is ConnectionState.Connecting, is ConnectionState.Starting -> {
                 hideAllPanels()
@@ -425,7 +513,6 @@ class MainActivity : AppCompatActivity() {
                     setStatus(R.string.status_preparing, connected = false)
                     return
                 }
-                // Bildirimden geldik / servis sync — cihaz listesine atlama
                 if (syncingServiceState) {
                     hideAllPanels()
                     connectionContainer.visibility = View.VISIBLE
@@ -463,6 +550,7 @@ class MainActivity : AppCompatActivity() {
         setupContainer.visibility = View.GONE
         deviceSelectionContainer.visibility = View.GONE
         connectionContainer.visibility = View.GONE
+        platformSelectionContainer.visibility = View.GONE
         inputContainer.visibility = View.GONE
     }
 
@@ -508,5 +596,38 @@ private class BondedDeviceAdapter(
     class Holder(view: View) : RecyclerView.ViewHolder(view) {
         val name: TextView = view.findViewById(R.id.deviceName)
         val address: TextView = view.findViewById(R.id.deviceAddress)
+    }
+}
+
+private class PlatformAdapter(
+    private val onClick: (PlatformProfile) -> Unit
+) : RecyclerView.Adapter<PlatformAdapter.Holder>() {
+
+    private val items = mutableListOf<PlatformProfile>()
+
+    fun submit(platforms: List<PlatformProfile>) {
+        items.clear()
+        items.addAll(platforms)
+        notifyDataSetChanged()
+    }
+
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): Holder {
+        val view = LayoutInflater.from(parent.context)
+            .inflate(R.layout.item_platform, parent, false)
+        return Holder(view)
+    }
+
+    override fun onBindViewHolder(holder: Holder, position: Int) {
+        val item = items[position]
+        holder.title.setText(item.titleRes)
+        holder.subtitle.setText(item.subtitleRes)
+        holder.itemView.setOnClickListener { onClick(item) }
+    }
+
+    override fun getItemCount(): Int = items.size
+
+    class Holder(view: View) : RecyclerView.ViewHolder(view) {
+        val title: TextView = view.findViewById(R.id.platformTitle)
+        val subtitle: TextView = view.findViewById(R.id.platformSubtitle)
     }
 }

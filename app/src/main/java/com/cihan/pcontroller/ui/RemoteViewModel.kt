@@ -6,6 +6,10 @@ import androidx.lifecycle.viewModelScope
 import com.cihan.pcontroller.bluetooth.BondedDevice
 import com.cihan.pcontroller.bluetooth.BondedDeviceRepository
 import com.cihan.pcontroller.bluetooth.ConnectionState
+import com.cihan.pcontroller.domain.PlatformCatalog
+import com.cihan.pcontroller.domain.PlatformId
+import com.cihan.pcontroller.domain.PlatformProfile
+import com.cihan.pcontroller.domain.PlatformStore
 import com.cihan.pcontroller.util.PermissionHelper
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -26,12 +30,19 @@ data class RemoteUiState(
     val connection: ConnectionState = ConnectionState.Idle,
     val selectedAddress: String? = null,
     val selectedName: String? = null,
-    val showRepairHint: Boolean = false
-)
+    val showRepairHint: Boolean = false,
+    /** null = platform seçim ekranı (bağlıyken) */
+    val activePlatformId: PlatformId? = null,
+    val platforms: List<PlatformProfile> = PlatformCatalog.all
+) {
+    val activeProfile: PlatformProfile?
+        get() = activePlatformId?.let { PlatformCatalog.byId(it) }
+}
 
 class RemoteViewModel(application: Application) : AndroidViewModel(application) {
 
     private val bondedRepo = BondedDeviceRepository(application)
+    private val platformStore = PlatformStore(application)
 
     private val _uiState = MutableStateFlow(RemoteUiState())
     val uiState: StateFlow<RemoteUiState> = _uiState.asStateFlow()
@@ -89,9 +100,16 @@ class RemoteViewModel(application: Application) : AndroidViewModel(application) 
             } else {
                 false
             }
+            // Bağlantı düşünce platform seçimini sıfırla → tekrar seçtir
+            val platform = when (state) {
+                is ConnectionState.Connected -> current.activePlatformId
+                is ConnectionState.Idle -> null
+                else -> current.activePlatformId
+            }
             current.copy(
                 connection = state,
                 showRepairHint = hint,
+                activePlatformId = platform,
                 selectedAddress = when (state) {
                     is ConnectionState.Connected -> state.deviceAddress
                     is ConnectionState.Failed -> current.selectedAddress
@@ -117,14 +135,29 @@ class RemoteViewModel(application: Application) : AndroidViewModel(application) 
             it.copy(
                 selectedAddress = device.address,
                 selectedName = device.name,
-                showRepairHint = false
+                showRepairHint = false,
+                activePlatformId = null
             )
         }
     }
 
+    fun selectPlatform(id: PlatformId) {
+        platformStore.lastPlatformId = id
+        _uiState.update { it.copy(activePlatformId = id) }
+    }
+
+    fun clearPlatformSelection() {
+        _uiState.update { it.copy(activePlatformId = null) }
+    }
+
     fun clearSelection() {
         _uiState.update {
-            it.copy(selectedAddress = null, selectedName = null, showRepairHint = false)
+            it.copy(
+                selectedAddress = null,
+                selectedName = null,
+                showRepairHint = false,
+                activePlatformId = null
+            )
         }
     }
 }

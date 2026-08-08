@@ -249,15 +249,15 @@ com.<package>.pcontroller/
 | Life | App öldür/aç → zombie Connected yok | ⬜ |
 
 ### Sprint 3 — Platform profilleri + ürün UI
-- [ ] `RemoteAction` (anlamlı aksiyonlar: Fullscreen, SeekBack, NextSlide…)
-- [ ] `PlatformProfile` → action → HID mapping (**HidDeviceManager’a gömülmez**)
-- [ ] Mod seçici: YouTube, Netflix, Spotify, Sunum, Genel PC
-- [ ] Profile göre kumanda grid
-- [ ] YouTube: Fullscreen=F, Seek±, nav…
-- [ ] Notification actions polish
-- [ ] App icon + splash
+- [x] `RemoteAction` (anlamlı aksiyonlar: Fullscreen, SeekBack, NextSlide…)
+- [x] `PlatformProfile` → action → HID mapping (**HidDeviceManager’a gömülmez**)
+- [x] Mod seçici: YouTube, Netflix, Spotify, Sunum, Genel PC
+- [x] Profile göre kumanda grid
+- [x] YouTube: Fullscreen=F, Seek±10 (J/L), Shift+P/N…
+- [x] Notification actions → aktif profil mapping
+- [ ] App icon + splash (önceki sprintte icon var; splash sonra)
 
-> Sprint 2’ye yeni özellik sokulmaz. Smoke test temiz → Sprint 3.
+> Bağlantı sonrası **Kumanda modu seç** ekranı → profile özel tuşlar.
 
 ### Sprint 4 — Sertleştirme
 - [ ] R8/minify + smoke test

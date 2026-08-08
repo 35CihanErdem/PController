@@ -20,7 +20,9 @@ import androidx.media.app.NotificationCompat.MediaStyle
 import com.cihan.pcontroller.R
 import com.cihan.pcontroller.bluetooth.ConnectionState
 import com.cihan.pcontroller.bluetooth.HidDeviceManager
-import com.cihan.pcontroller.bluetooth.KeyCode
+import com.cihan.pcontroller.domain.HidCommand
+import com.cihan.pcontroller.domain.PlatformStore
+import com.cihan.pcontroller.domain.RemoteAction
 import com.cihan.pcontroller.ui.MainActivity
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.StateFlow
@@ -54,6 +56,7 @@ class BluetoothHidService : LifecycleService() {
     private val binder = LocalBinder()
     private var foregroundStarted = false
     private var mediaSession: MediaSessionCompat? = null
+    private lateinit var platformStore: PlatformStore
 
     inner class LocalBinder : Binder() {
         fun getService(): BluetoothHidService = this@BluetoothHidService
@@ -66,34 +69,38 @@ class BluetoothHidService : LifecycleService() {
 
     fun disconnect() = hidManager?.disconnect()
 
-    fun sendKey(keyCode: KeyCode) = hidManager?.sendKey(keyCode)
+    fun sendCommand(command: HidCommand) = hidManager?.sendCommand(command)
 
-    fun sendVolumeUp() = hidManager?.sendVolumeUp()
-
-    fun sendVolumeDown() = hidManager?.sendVolumeDown()
-
-    fun sendPlayPause() = hidManager?.sendPlayPause()
+    /** Seçili platform mapping üzerinden anlamlı aksiyon gönder. */
+    fun sendAction(action: RemoteAction) {
+        if (!::platformStore.isInitialized) {
+            platformStore = PlatformStore(this)
+        }
+        val command = platformStore.profile().resolve(action) ?: return
+        hidManager?.sendCommand(command)
+    }
 
     override fun onCreate() {
         super.onCreate()
         try {
+            platformStore = PlatformStore(this)
             createNotificationChannel()
             mediaSession = MediaSessionCompat(this, "PController").apply {
                 setCallback(object : MediaSessionCompat.Callback() {
                     override fun onPlay() {
-                        hidManager?.sendPlayPause()
+                        sendAction(RemoteAction.PlayPause)
                     }
 
                     override fun onPause() {
-                        hidManager?.sendPlayPause()
+                        sendAction(RemoteAction.PlayPause)
                     }
 
                     override fun onSkipToPrevious() {
-                        hidManager?.sendKey(KeyCode.LEFT_ARROW)
+                        sendAction(RemoteAction.SeekBack)
                     }
 
                     override fun onSkipToNext() {
-                        hidManager?.sendKey(KeyCode.RIGHT_ARROW)
+                        sendAction(RemoteAction.SeekForward)
                     }
                 })
                 isActive = true
@@ -141,13 +148,13 @@ class BluetoothHidService : LifecycleService() {
                 hidManager?.disconnect()
                 stopSelf()
             }
-            ACTION_LEFT -> hidManager?.sendKey(KeyCode.LEFT_ARROW)
-            ACTION_RIGHT -> hidManager?.sendKey(KeyCode.RIGHT_ARROW)
-            ACTION_UP -> hidManager?.sendKey(KeyCode.UP_ARROW)
-            ACTION_DOWN -> hidManager?.sendKey(KeyCode.DOWN_ARROW)
-            ACTION_PLAY_PAUSE -> hidManager?.sendPlayPause()
-            ACTION_VOL_UP -> hidManager?.sendVolumeUp()
-            ACTION_VOL_DOWN -> hidManager?.sendVolumeDown()
+            ACTION_LEFT -> sendAction(RemoteAction.SeekBack)
+            ACTION_RIGHT -> sendAction(RemoteAction.SeekForward)
+            ACTION_UP -> sendAction(RemoteAction.NavUp)
+            ACTION_DOWN -> sendAction(RemoteAction.NavDown)
+            ACTION_PLAY_PAUSE -> sendAction(RemoteAction.PlayPause)
+            ACTION_VOL_UP -> sendAction(RemoteAction.VolumeUp)
+            ACTION_VOL_DOWN -> sendAction(RemoteAction.VolumeDown)
         }
         // Avoid crash-restart loops if something goes wrong
         return START_NOT_STICKY
@@ -270,12 +277,17 @@ class BluetoothHidService : LifecycleService() {
             .setPriority(NotificationCompat.PRIORITY_DEFAULT)
 
         if (state is ConnectionState.Connected) {
-            // Sıra: -5 | V- | Play | V+ | +5
-            // Compact (Spotify çubuğu): V- · Play · V+
+            // Profil aksiyonları: Seek− | V− | Play | V+ | Seek+
+            // Compact: V- · Play · V+
+            val profile = if (::platformStore.isInitialized) platformStore.profile() else null
+            val modeLabel = profile?.let { getString(it.titleRes) } ?: ""
+            if (modeLabel.isNotEmpty()) {
+                builder.setContentText("$text · $modeLabel")
+            }
             builder
                 .addAction(
                     android.R.drawable.ic_media_rew,
-                    "-5",
+                    "−",
                     actionPending(ACTION_LEFT, 1)
                 )
                 .addAction(
@@ -295,12 +307,12 @@ class BluetoothHidService : LifecycleService() {
                 )
                 .addAction(
                     android.R.drawable.ic_media_ff,
-                    "+5",
+                    "+",
                     actionPending(ACTION_RIGHT, 5)
                 )
 
             val style = MediaStyle()
-                .setShowActionsInCompactView(1, 2, 3) // V- · Play · V+
+                .setShowActionsInCompactView(1, 2, 3)
                 .setShowCancelButton(false)
             mediaSession?.sessionToken?.let { style.setMediaSession(it) }
             builder.setStyle(style)
