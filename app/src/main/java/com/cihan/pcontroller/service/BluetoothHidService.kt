@@ -80,6 +80,30 @@ class BluetoothHidService : LifecycleService() {
         hidManager?.sendCommand(command)
     }
 
+    fun mouseMove(dx: Int, dy: Int) = hidManager?.sendMouseMove(dx, dy) ?: false
+
+    fun mouseScroll(wheel: Int) = hidManager?.sendMouseScroll(wheel) ?: false
+
+    fun mouseLeftClick() =
+        hidManager?.sendMouseClick(com.cihan.pcontroller.bluetooth.HidReports.MOUSE_BTN_LEFT) ?: false
+
+    fun mouseRightClick() =
+        hidManager?.sendMouseClick(com.cihan.pcontroller.bluetooth.HidReports.MOUSE_BTN_RIGHT) ?: false
+
+    fun mouseLeftDown() =
+        hidManager?.sendMouseButtonDown(com.cihan.pcontroller.bluetooth.HidReports.MOUSE_BTN_LEFT) ?: false
+
+    fun mouseLeftUp() =
+        hidManager?.sendMouseButtonUp(com.cihan.pcontroller.bluetooth.HidReports.MOUSE_BTN_LEFT) ?: false
+
+    fun mouseRightDown() =
+        hidManager?.sendMouseButtonDown(com.cihan.pcontroller.bluetooth.HidReports.MOUSE_BTN_RIGHT) ?: false
+
+    fun mouseRightUp() =
+        hidManager?.sendMouseButtonUp(com.cihan.pcontroller.bluetooth.HidReports.MOUSE_BTN_RIGHT) ?: false
+
+    fun probeMouse() = hidManager?.probeMouse() ?: false
+
     override fun onCreate() {
         super.onCreate()
         try {

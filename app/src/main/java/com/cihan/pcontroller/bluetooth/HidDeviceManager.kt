@@ -31,11 +31,14 @@ class HidDeviceManager(
         private const val KEY_RELEASE_MS = 120L
         private const val KEY_MODIFIER_STEP_MS = 30L
         private const val CONSUMER_RELEASE_MS = 120L
+        private const val MOUSE_CLICK_MS = 50L
         private const val CONNECT_RETRY_DELAY_MS = 800L
         private const val MAX_CONNECT_ATTEMPTS = 3
         /** Ignore stale DISCONNECTED right after connect() — common OEM quirk. */
         private const val DISCONNECT_GRACE_MS = 1500L
-        private const val CONNECT_TIMEOUT_MS = 20_000L
+        private const val CONNECT_TIMEOUT_MS = 12_000L
+        /** registerApp / profile proxy sonsuza kadar "HID hazırlanıyor"da kalmasın */
+        private const val STARTING_TIMEOUT_MS = 10_000L
     }
 
     private val _connectionState = MutableStateFlow<ConnectionState>(ConnectionState.Idle)
@@ -52,11 +55,15 @@ class HidDeviceManager(
     private var connectAttempts = 0
     private var connectStartedAtMs = 0L
     private var connectTimeoutRunnable: Runnable? = null
+    private var startingTimeoutRunnable: Runnable? = null
     private var retryRunnable: Runnable? = null
     private var disconnectConfirmRunnable: Runnable? = null
     private var keyReleaseRunnable: Runnable? = null
     private var consumerReleaseRunnable: Runnable? = null
+    private var mouseClickReleaseRunnable: Runnable? = null
+    private var mouseButtonsHeld: Int = 0
     private var connectGeneration: Int = 0
+    private var usedComboSubclass = false
 
     private val profileListener = object : BluetoothProfile.ServiceListener {
         override fun onServiceConnected(profile: Int, proxy: BluetoothProfile) {
@@ -91,13 +98,15 @@ class HidDeviceManager(
             if (isReleased) return
             isAppRegistered = registered
             if (registered) {
+                cancelStartingTimeout()
                 val current = _connectionState.value
                 if (current is ConnectionState.Connected) {
                     Log.d(TAG, "Already connected — ignore re-register")
                     return
                 }
+                // Connecting iken ikinci connectInternal ÇAĞIRMA
                 if (current is ConnectionState.Connecting) {
-                    Log.d(TAG, "Already connecting — ignore re-register flip")
+                    Log.d(TAG, "Already connecting — keep waiting, no second connect()")
                     return
                 }
                 val toConnect = pendingConnectAddress ?: pluggedDevice?.address
@@ -163,6 +172,7 @@ class HidDeviceManager(
         if (hidDevice != null) {
             if (!isAppRegistered) {
                 _connectionState.value = ConnectionState.Starting
+                scheduleStartingTimeout()
                 registerHidApp()
             } else if (pendingConnectAddress != null) {
                 val address = pendingConnectAddress
@@ -179,16 +189,20 @@ class HidDeviceManager(
         }
 
         _connectionState.value = ConnectionState.Starting
+        scheduleStartingTimeout()
         val adapter = bluetoothAdapter()
         if (adapter == null) {
+            cancelStartingTimeout()
             _connectionState.value = ConnectionState.Failed("Bluetooth desteklenmiyor")
             return
         }
         if (!adapter.isEnabled) {
+            cancelStartingTimeout()
             _connectionState.value = ConnectionState.Failed("Bluetooth kapalı")
             return
         }
         if (!hasConnectPermission()) {
+            cancelStartingTimeout()
             _connectionState.value = ConnectionState.Failed("Bluetooth izni yok")
             return
         }
@@ -197,6 +211,7 @@ class HidDeviceManager(
         Log.d(TAG, "getProfileProxy(HID_DEVICE)=$ok")
         if (!ok) {
             profileProxyRequested = false
+            cancelStartingTimeout()
             _connectionState.value = ConnectionState.Failed(
                 "HID Device profili yok (telefon desteklemiyor olabilir)"
             )
@@ -243,6 +258,9 @@ class HidDeviceManager(
     fun disconnect() {
         cancelTimeouts()
         cancelDisconnectConfirm()
+        mouseClickReleaseRunnable?.let { mainHandler.removeCallbacks(it) }
+        mouseClickReleaseRunnable = null
+        mouseButtonsHeld = 0
         connectGeneration++
         pendingConnectAddress = null
         targetAddress = null
@@ -284,6 +302,79 @@ class HidDeviceManager(
         }
     }
 
+    fun sendMouseMove(dx: Int, dy: Int): Boolean {
+        if (dx == 0 && dy == 0) return true
+        return sendMouseRaw(buttons = mouseButtonsHeld, dx = dx, dy = dy, wheel = 0)
+    }
+
+    fun sendMouseScroll(wheel: Int): Boolean {
+        if (wheel == 0) return true
+        var remain = wheel
+        var ok = true
+        while (remain != 0) {
+            val step = remain.coerceIn(-127, 127)
+            if (!sendMouseRaw(buttons = mouseButtonsHeld, dx = 0, dy = 0, wheel = step)) {
+                ok = false
+            }
+            remain -= step
+        }
+        return ok
+    }
+
+    fun sendMouseButtonDown(buttonMask: Int): Boolean {
+        mouseButtonsHeld = mouseButtonsHeld or (buttonMask and 0x07)
+        return sendMouseRaw(buttons = mouseButtonsHeld, dx = 0, dy = 0, wheel = 0)
+    }
+
+    fun sendMouseButtonUp(buttonMask: Int): Boolean {
+        mouseButtonsHeld = mouseButtonsHeld and (buttonMask and 0x07).inv()
+        return sendMouseRaw(buttons = mouseButtonsHeld, dx = 0, dy = 0, wheel = 0)
+    }
+
+    /** Sol/sağ tık pulse. */
+    fun sendMouseClick(buttonMask: Int): Boolean {
+        val mask = buttonMask and 0x07
+        if (mask == 0) return false
+        mouseClickReleaseRunnable?.let { mainHandler.removeCallbacks(it) }
+        val downOk = sendMouseButtonDown(mask)
+        val release = Runnable {
+            sendMouseButtonUp(mask)
+            mouseClickReleaseRunnable = null
+        }
+        mouseClickReleaseRunnable = release
+        mainHandler.postDelayed(release, MOUSE_CLICK_MS)
+        return downOk
+    }
+
+    /** Bağlantı + mouse report smoke test. */
+    fun probeMouse(): Boolean {
+        if (connectedDevice == null || hidDevice == null) return false
+        return sendMouseRaw(0, 1, 0, 0) && sendMouseRaw(0, -1, 0, 0)
+    }
+
+    private fun sendMouseRaw(buttons: Int, dx: Int, dy: Int, wheel: Int): Boolean {
+        val hid = hidDevice
+        val target = connectedDevice
+        if (hid == null || target == null || !hasConnectPermission()) {
+            Log.w(TAG, "sendMouse skipped: hid=${hid != null} target=${target != null}")
+            return false
+        }
+        return try {
+            val ok = hid.sendReport(
+                target,
+                HidReports.REPORT_ID_MOUSE,
+                HidReports.mouseReport(buttons, dx, dy, wheel)
+            )
+            if (!ok) {
+                Log.e(TAG, "sendMouse sendReport=false — Windows eski HID cache / yeniden eşleştir")
+            }
+            ok
+        } catch (e: Exception) {
+            Log.e(TAG, "sendMouse", e)
+            false
+        }
+    }
+
     fun release() {
         isReleased = true
         cancelTimeouts()
@@ -316,62 +407,106 @@ class HidDeviceManager(
         _connectionState.value = ConnectionState.Idle
     }
 
-    private fun registerHidApp() {
+    private fun registerHidApp(preferCombo: Boolean = true) {
         val device = hidDevice ?: return
         if (!hasConnectPermission()) {
+            cancelStartingTimeout()
             _connectionState.value = ConnectionState.Failed("Bluetooth izni yok")
             return
         }
-        // Prefer KEYBOARD subclass — Windows hosts are more reliable than COMBO
+        // Windows mouse için COMBO şart. KEYBOARD subclass Windows'ta mouse report'u yutuyor.
+        val subclass = if (preferCombo) {
+            usedComboSubclass = true
+            BluetoothHidDevice.SUBCLASS1_COMBO
+        } else {
+            usedComboSubclass = false
+            BluetoothHidDevice.SUBCLASS1_KEYBOARD
+        }
         val sdp = BluetoothHidDeviceAppSdpSettings(
             "PController",
-            "Remote keyboard / media control",
+            "Keyboard, media and mouse remote",
             "PController",
-            BluetoothHidDevice.SUBCLASS1_KEYBOARD,
+            subclass,
             HidReports.descriptor()
         )
+        // Interrupt kanalı — mouse için BEST_EFFORT QoS
+        val outQos = try {
+            android.bluetooth.BluetoothHidDeviceAppQosSettings(
+                android.bluetooth.BluetoothHidDeviceAppQosSettings.SERVICE_BEST_EFFORT,
+                800,
+                9,
+                0,
+                11250,
+                android.bluetooth.BluetoothHidDeviceAppQosSettings.MAX
+            )
+        } catch (_: Exception) {
+            null
+        }
+        scheduleStartingTimeout()
         val registered = try {
             device.registerApp(
                 sdp,
                 null,
-                null,
+                outQos,
                 context.mainExecutor,
                 hidCallback
             )
         } catch (e: SecurityException) {
             Log.e(TAG, "registerApp SecurityException", e)
+            cancelStartingTimeout()
             _connectionState.value = ConnectionState.Failed("HID kayıt izni yok")
             return
         }
-        Log.d(TAG, "registerApp requested: $registered")
+        Log.d(TAG, "registerApp requested=$registered subclassCombo=$preferCombo")
         if (!registered) {
-            // Another app may hold HID Device — retry unregister path once
             try {
                 device.unregisterApp()
             } catch (_: Exception) {
             }
             mainHandler.postDelayed({
                 if (isReleased || hidDevice == null) return@postDelayed
-                val retry = try {
-                    hidDevice?.registerApp(
-                        sdp,
-                        null,
-                        null,
-                        context.mainExecutor,
-                        hidCallback
-                    ) ?: false
-                } catch (e: Exception) {
-                    Log.e(TAG, "registerApp retry", e)
-                    false
+                if (preferCombo) {
+                    Log.d(TAG, "COMBO register false — KEYBOARD fallback (mouse zayıf olabilir)")
+                    registerHidApp(preferCombo = false)
+                    return@postDelayed
                 }
-                Log.d(TAG, "registerApp retry: $retry")
-                if (!retry) {
-                    _connectionState.value = ConnectionState.Failed(
-                        "HID kaydı başarısız (başka uygulama kullanıyor olabilir)"
-                    )
-                }
-            }, 500)
+                cancelStartingTimeout()
+                _connectionState.value = ConnectionState.Failed(
+                    "HID kaydı başarısız (başka uygulama kullanıyor olabilir)"
+                )
+            }, 400)
         }
+    }
+
+    private fun scheduleStartingTimeout() {
+        cancelStartingTimeout()
+        val runnable = Runnable {
+            if (isReleased) return@Runnable
+            if (_connectionState.value !is ConnectionState.Starting) return@Runnable
+            Log.e(TAG, "Starting timeout — HID hazırlanıyor takıldı")
+            if (usedComboSubclass && hidDevice != null) {
+                Log.d(TAG, "COMBO timeout — KEYBOARD fallback")
+                try {
+                    hidDevice?.unregisterApp()
+                } catch (_: Exception) {
+                }
+                isAppRegistered = false
+                _connectionState.value = ConnectionState.Starting
+                registerHidApp(preferCombo = false)
+                return@Runnable
+            }
+            pendingConnectAddress = null
+            _connectionState.value = ConnectionState.Failed(
+                "HID hazırlanamadı. Tekrar Dene; olmazsa uygulamayı kapatıp aç."
+            )
+        }
+        startingTimeoutRunnable = runnable
+        mainHandler.postDelayed(runnable, STARTING_TIMEOUT_MS)
+    }
+
+    private fun cancelStartingTimeout() {
+        startingTimeoutRunnable?.let { mainHandler.removeCallbacks(it) }
+        startingTimeoutRunnable = null
     }
 
     @SuppressLint("MissingPermission")
@@ -425,6 +560,7 @@ class HidDeviceManager(
         if (_connectionState.value !is ConnectionState.Connected) {
             _connectionState.value = ConnectionState.Connecting
         }
+        cancelStartingTimeout()
         scheduleConnectTimeout(deviceAddress)
 
         val ok = try {
@@ -435,8 +571,9 @@ class HidDeviceManager(
             return
         }
         Log.d(TAG, "connect($deviceAddress) attempt=$connectAttempts => $ok")
+        // false çoğu OEM'de "zaten bağlanıyor" demek — hemen fail etme, timeout beklesin
         if (!ok) {
-            scheduleRetryOrFail(deviceAddress, "Bağlantı başlatılamadı")
+            Log.w(TAG, "connect()=false — callback/timeout bekleniyor (çift bağlama yok)")
         }
     }
 
@@ -547,6 +684,7 @@ class HidDeviceManager(
         connectTimeoutRunnable = null
         retryRunnable?.let { mainHandler.removeCallbacks(it) }
         retryRunnable = null
+        cancelStartingTimeout()
     }
 
     @SuppressLint("MissingPermission")

@@ -248,16 +248,15 @@ com.<package>.pcontroller/
 | Life | PC BT kapat → state düşer; aç → reconnect | ⬜ |
 | Life | App öldür/aç → zombie Connected yok | ⬜ |
 
-### Sprint 3 — Platform profilleri + ürün UI
-- [x] `RemoteAction` (anlamlı aksiyonlar: Fullscreen, SeekBack, NextSlide…)
-- [x] `PlatformProfile` → action → HID mapping (**HidDeviceManager’a gömülmez**)
-- [x] Mod seçici: YouTube, Netflix, Spotify, Sunum, Genel PC
+### Sprint 3 — Platform profilleri + Mouse HID
+- [x] `RemoteAction` + `PlatformProfile` mapping
+- [x] Mod seçici: YouTube, Netflix, Spotify, Sunum, Web/Film, Genel
 - [x] Profile göre kumanda grid
-- [x] YouTube: Fullscreen=F, Seek±10 (J/L), Shift+P/N…
-- [x] Notification actions → aktif profil mapping
-- [ ] App icon + splash (önceki sprintte icon var; splash sonra)
+- [x] **Mouse HID (Report ID 3)** + Trackpad UI (temel özellik)
+- [x] Remote ↔ Mouse geçişi (platformdan bağımsız)
+- [ ] App icon + splash polish
 
-> Bağlantı sonrası **Kumanda modu seç** ekranı → profile özel tuşlar.
+> **Descriptor değişti** → Windows’ta unpair + yeniden eşleştir şart.
 
 ### Sprint 4 — Sertleştirme
 - [ ] R8/minify + smoke test

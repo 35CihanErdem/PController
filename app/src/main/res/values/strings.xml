@@ -25,12 +25,18 @@
     <string name="bt_permission_message">PController, eşleştirilmiş bilgisayarları görmek ve HID bağlantısı kurmak için Bluetooth iznine ihtiyaç duyar.</string>
     <string name="repair_pairing">Yeniden eşleştirme yardımı</string>
     <string name="repair_dialog_title">Yeniden eşleştir</string>
-    <string name="repair_dialog_message">Windows HID önbelleği eski kalmış olabilir.\n\n1) Windows’ta bu telefonu kaldırın\n2) Telefonda PC eşleşmesini silin\n3) Yeniden eşleştirin\n4) PController’da tekrar bağlanın</string>
+    <string name="repair_dialog_message">HID profili değişti (klavye + medya + mouse).\nWindows eski tanımı tutuyor olabilir.\n\n1) Windows’ta bu telefonu kaldırın\n2) Telefonda PC eşleşmesini silin\n3) Yeniden eşleştirin\n4) PController’da tekrar bağlanın</string>
     <string name="repair_open_settings">Bluetooth ayarlarını aç</string>
 
     <string name="platform_pick_title">Kumanda modu seç</string>
-    <string name="platform_pick_hint">Özel kısayolu bilinen yerler için ayrı mod; gerisi Web/Film veya Genel ile çalışır. PC, tablet, TV kutusu — HID kabul eden her Bluetooth host.</string>
+    <string name="platform_pick_hint">Mouse her yerde çalışır. Platform tuşları YouTube / Netflix vb. için kısayol setidir.</string>
     <string name="platform_change">Modu değiştir</string>
+    <string name="mouse_mode">Mouse / Trackpad</string>
+    <string name="back_to_remote">Kumandaya dön</string>
+    <string name="mouse_left_click">Sol tık</string>
+    <string name="mouse_right_click">Sağ tık</string>
+    <string name="mouse_gesture_hint">Tek dokunuş = sol · İki parmak dokunuş = sağ · İki parmak kaydır = scroll</string>
+    <string name="mouse_repair_hint">Trackpad’in çalışması için Windows HID’i yenilemen şart:\n\n1) Windows → Bluetooth → bu telefonu Kaldır\n2) Telefonda PC eşleşmesini sil\n3) Yeniden eşleştir\n4) PController’da tekrar bağlan\n5) Mouse / Trackpad’i aç\n\nEşleştirmeden mouse gitmez (eski klavye profili kalır).</string>
     <string name="platform_web">Web / Film</string>
     <string name="platform_web_sub">HBO Max, tarayıcı, HTML5 oynatıcı — Space, oklar, Tam Ekran</string>
     <string name="platform_youtube">YouTube</string>

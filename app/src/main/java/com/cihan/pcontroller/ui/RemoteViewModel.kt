@@ -24,6 +24,12 @@ enum class SetupPhase {
     Ready
 }
 
+/** Remote (platform tuşları) veya Mouse (trackpad) yüzeyi. */
+enum class ControlSurface {
+    Remote,
+    Mouse
+}
+
 data class RemoteUiState(
     val setup: SetupPhase = SetupPhase.Checking,
     val devices: List<BondedDevice> = emptyList(),
@@ -33,6 +39,7 @@ data class RemoteUiState(
     val showRepairHint: Boolean = false,
     /** null = platform seçim ekranı (bağlıyken) */
     val activePlatformId: PlatformId? = null,
+    val controlSurface: ControlSurface = ControlSurface.Remote,
     val platforms: List<PlatformProfile> = PlatformCatalog.all
 ) {
     val activeProfile: PlatformProfile?
@@ -59,18 +66,18 @@ class RemoteViewModel(application: Application) : AndroidViewModel(application) 
                         )
                     }
                 }
-                !PermissionHelper.isBluetoothEnabled(app) -> {
-                    _uiState.update {
-                        it.copy(
-                            setup = SetupPhase.NeedBluetoothEnable,
-                            devices = emptyList()
-                        )
-                    }
-                }
                 !PermissionHelper.hasBluetoothPermissions(app) -> {
                     _uiState.update {
                         it.copy(
                             setup = SetupPhase.NeedPermission,
+                            devices = emptyList()
+                        )
+                    }
+                }
+                !PermissionHelper.isBluetoothEnabled(app) -> {
+                    _uiState.update {
+                        it.copy(
+                            setup = SetupPhase.NeedBluetoothEnable,
                             devices = emptyList()
                         )
                     }
@@ -106,10 +113,15 @@ class RemoteViewModel(application: Application) : AndroidViewModel(application) 
                 is ConnectionState.Idle -> null
                 else -> current.activePlatformId
             }
+            val surface = when (state) {
+                is ConnectionState.Idle -> ControlSurface.Remote
+                else -> current.controlSurface
+            }
             current.copy(
                 connection = state,
                 showRepairHint = hint,
                 activePlatformId = platform,
+                controlSurface = surface,
                 selectedAddress = when (state) {
                     is ConnectionState.Connected -> state.deviceAddress
                     is ConnectionState.Failed -> current.selectedAddress
@@ -136,18 +148,38 @@ class RemoteViewModel(application: Application) : AndroidViewModel(application) 
                 selectedAddress = device.address,
                 selectedName = device.name,
                 showRepairHint = false,
-                activePlatformId = null
+                activePlatformId = null,
+                controlSurface = ControlSurface.Remote
             )
         }
     }
 
     fun selectPlatform(id: PlatformId) {
         platformStore.lastPlatformId = id
-        _uiState.update { it.copy(activePlatformId = id) }
+        _uiState.update {
+            it.copy(activePlatformId = id, controlSurface = ControlSurface.Remote)
+        }
+    }
+
+    /** Platform seçmeden doğrudan trackpad. */
+    fun selectMouseMode() {
+        _uiState.update {
+            it.copy(
+                controlSurface = ControlSurface.Mouse,
+                // Mouse için platform şart değil; dönüşte seçim ekranı için null tut
+                activePlatformId = it.activePlatformId
+            )
+        }
+    }
+
+    fun showRemoteSurface() {
+        _uiState.update { it.copy(controlSurface = ControlSurface.Remote) }
     }
 
     fun clearPlatformSelection() {
-        _uiState.update { it.copy(activePlatformId = null) }
+        _uiState.update {
+            it.copy(activePlatformId = null, controlSurface = ControlSurface.Remote)
+        }
     }
 
     fun clearSelection() {
@@ -156,7 +188,8 @@ class RemoteViewModel(application: Application) : AndroidViewModel(application) 
                 selectedAddress = null,
                 selectedName = null,
                 showRepairHint = false,
-                activePlatformId = null
+                activePlatformId = null,
+                controlSurface = ControlSurface.Remote
             )
         }
     }

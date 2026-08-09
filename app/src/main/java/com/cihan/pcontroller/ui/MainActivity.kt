@@ -3,7 +3,10 @@ package com.cihan.pcontroller.ui
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.ServiceConnection
+import android.bluetooth.BluetoothAdapter
+import android.os.Build
 import android.os.Bundle
 import android.os.IBinder
 import android.view.LayoutInflater
@@ -66,10 +69,12 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var platformSelectionContainer: LinearLayout
     private lateinit var platformListRecyclerView: RecyclerView
+    private lateinit var openMouseFromPickButton: Button
     private lateinit var disconnectFromPlatformButton: Button
 
     private lateinit var inputContainer: ScrollView
     private lateinit var changePlatformButton: Button
+    private lateinit var openMouseButton: Button
     private lateinit var topPrimaryButton: Button
     private lateinit var mediaRow: LinearLayout
     private lateinit var mediaPrevButton: Button
@@ -90,12 +95,27 @@ class MainActivity : AppCompatActivity() {
     private lateinit var extraButton: Button
     private lateinit var disconnectButton: Button
 
+    private lateinit var mouseContainer: LinearLayout
+    private lateinit var trackpadView: TrackpadView
+    private lateinit var mouseLeftButton: Button
+    private lateinit var mouseRightButton: Button
+    private lateinit var backToRemoteButton: Button
+    private lateinit var disconnectFromMouseButton: Button
+
     private var hidService: BluetoothHidService? = null
     private var bound = false
     private var stateJob: Job? = null
     private var connectRequestedAddress: String? = null
     private var awaitingConnection = false
     private var syncingServiceState = false
+
+    private val btStateReceiver = object : android.content.BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (intent?.action == BluetoothAdapter.ACTION_STATE_CHANGED) {
+                viewModel.refreshSetup()
+            }
+        }
+    }
 
     private val deviceAdapter = BondedDeviceAdapter { device ->
         viewModel.selectDevice(device)
@@ -172,9 +192,15 @@ class MainActivity : AppCompatActivity() {
                 }
             }
         } catch (e: Exception) {
-            Toast.makeText(this, "Açılış hatası: ${e.message}", Toast.LENGTH_LONG).show()
-            finish()
+            // Layout/inflate dışı hatalarda uygulamayı öldürme — kullanıcı dışarı atılmasın
+            Toast.makeText(this, "Açılış uyarısı: ${e.message}", Toast.LENGTH_LONG).show()
+            android.util.Log.e("MainActivity", "onCreate", e)
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        viewModel.refreshSetup()
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -187,6 +213,7 @@ class MainActivity : AppCompatActivity() {
     override fun onStart() {
         super.onStart()
         viewModel.refreshSetup()
+        registerBtReceiver()
         tryBindExistingService()
         val conn = viewModel.uiState.value.connection
         if (conn is ConnectionState.Connected || awaitingConnection) {
@@ -194,14 +221,9 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun handleOpenIntent(intent: Intent?) {
-        if (intent?.getBooleanExtra(EXTRA_FROM_NOTIFICATION, false) == true) {
-            syncingServiceState = true
-        }
-    }
-
     override fun onStop() {
         super.onStop()
+        unregisterBtReceiver()
         stateJob?.cancel()
         stateJob = null
         if (bound) {
@@ -211,6 +233,31 @@ class MainActivity : AppCompatActivity() {
             }
             bound = false
             hidService = null
+        }
+    }
+
+    private fun registerBtReceiver() {
+        try {
+            val filter = IntentFilter(BluetoothAdapter.ACTION_STATE_CHANGED)
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                registerReceiver(btStateReceiver, filter, Context.RECEIVER_NOT_EXPORTED)
+            } else {
+                registerReceiver(btStateReceiver, filter)
+            }
+        } catch (_: Exception) {
+        }
+    }
+
+    private fun unregisterBtReceiver() {
+        try {
+            unregisterReceiver(btStateReceiver)
+        } catch (_: Exception) {
+        }
+    }
+
+    private fun handleOpenIntent(intent: Intent?) {
+        if (intent?.getBooleanExtra(EXTRA_FROM_NOTIFICATION, false) == true) {
+            syncingServiceState = true
         }
     }
 
@@ -237,10 +284,12 @@ class MainActivity : AppCompatActivity() {
 
         platformSelectionContainer = findViewById(R.id.platformSelectionContainer)
         platformListRecyclerView = findViewById(R.id.platformListRecyclerView)
+        openMouseFromPickButton = findViewById(R.id.openMouseFromPickButton)
         disconnectFromPlatformButton = findViewById(R.id.disconnectFromPlatformButton)
 
         inputContainer = findViewById(R.id.inputContainer)
         changePlatformButton = findViewById(R.id.changePlatformButton)
+        openMouseButton = findViewById(R.id.openMouseButton)
         topPrimaryButton = findViewById(R.id.topPrimaryButton)
         mediaRow = findViewById(R.id.mediaRow)
         mediaPrevButton = findViewById(R.id.mediaPrevButton)
@@ -260,11 +309,33 @@ class MainActivity : AppCompatActivity() {
         rowBRightButton = findViewById(R.id.rowBRightButton)
         extraButton = findViewById(R.id.extraButton)
         disconnectButton = findViewById(R.id.disconnectButton)
+
+        mouseContainer = findViewById(R.id.mouseContainer)
+        trackpadView = findViewById(R.id.trackpadView)
+        mouseLeftButton = findViewById(R.id.mouseLeftButton)
+        mouseRightButton = findViewById(R.id.mouseRightButton)
+        backToRemoteButton = findViewById(R.id.backToRemoteButton)
+        disconnectFromMouseButton = findViewById(R.id.disconnectFromMouseButton)
     }
 
     private fun setupListeners() {
         enableBluetoothButton.setOnClickListener {
-            enableBtLauncher.launch(PermissionHelper.createEnableBluetoothIntent())
+            // Android 12+: ACTION_REQUEST_ENABLE için BLUETOOTH_CONNECT şart — yoksa crash
+            if (!PermissionHelper.hasBluetoothPermissions(this)) {
+                permissionLauncher.launch(PermissionHelper.requiredRuntimePermissions())
+                return@setOnClickListener
+            }
+            try {
+                enableBtLauncher.launch(PermissionHelper.createEnableBluetoothIntent())
+            } catch (e: Exception) {
+                android.util.Log.e("MainActivity", "enable BT intent failed", e)
+                Toast.makeText(
+                    this,
+                    "Sistem Bluetooth ayarını açıyorum…",
+                    Toast.LENGTH_SHORT
+                ).show()
+                PermissionHelper.openBluetoothSettings(this)
+            }
         }
         requestPermissionButton.setOnClickListener {
             permissionLauncher.launch(PermissionHelper.requiredRuntimePermissions())
@@ -282,6 +353,114 @@ class MainActivity : AppCompatActivity() {
         disconnectButton.setOnClickListener { disconnectAndReset() }
         disconnectFromPlatformButton.setOnClickListener { disconnectAndReset() }
         changePlatformButton.setOnClickListener { viewModel.clearPlatformSelection() }
+        openMouseButton.setOnClickListener { openMouseMode() }
+        openMouseFromPickButton.setOnClickListener { openMouseMode() }
+        backToRemoteButton.setOnClickListener {
+            if (viewModel.uiState.value.activePlatformId != null) {
+                viewModel.showRemoteSurface()
+            } else {
+                viewModel.clearPlatformSelection()
+            }
+        }
+        disconnectFromMouseButton.setOnClickListener { disconnectAndReset() }
+
+        trackpadView.listener = object : TrackpadView.Listener {
+            override fun onMove(dx: Int, dy: Int) {
+                val svc = hidService
+                if (svc == null) {
+                    ensureServiceBound()
+                    return
+                }
+                svc.mouseMove(dx, dy)
+            }
+
+            override fun onScroll(wheel: Int) {
+                hidService?.mouseScroll(wheel) ?: ensureServiceBound()
+            }
+
+            override fun onLeftClick() {
+                hidService?.mouseLeftClick() ?: ensureServiceBound()
+            }
+
+            override fun onRightClick() {
+                hidService?.mouseRightClick() ?: ensureServiceBound()
+            }
+        }
+        mouseLeftButton.setOnTouchListener { _, event ->
+            when (event.actionMasked) {
+                android.view.MotionEvent.ACTION_DOWN -> {
+                    hidService?.mouseLeftDown()
+                    true
+                }
+                android.view.MotionEvent.ACTION_UP, android.view.MotionEvent.ACTION_CANCEL -> {
+                    hidService?.mouseLeftUp()
+                    true
+                }
+                else -> false
+            }
+        }
+        mouseRightButton.setOnTouchListener { _, event ->
+            when (event.actionMasked) {
+                android.view.MotionEvent.ACTION_DOWN -> {
+                    hidService?.mouseRightDown()
+                    true
+                }
+                android.view.MotionEvent.ACTION_UP, android.view.MotionEvent.ACTION_CANCEL -> {
+                    hidService?.mouseRightUp()
+                    true
+                }
+                else -> false
+            }
+        }
+    }
+
+    private fun openMouseMode() {
+        ensureServiceBound()
+        viewModel.selectMouseMode()
+        val prefs = getSharedPreferences("pcontroller_mouse", MODE_PRIVATE)
+        val ackedVersion = prefs.getInt("descriptor_acked", 0)
+        val needRepair = ackedVersion < com.cihan.pcontroller.bluetooth.HidReports.DESCRIPTOR_VERSION
+        if (needRepair) {
+            AlertDialog.Builder(this)
+                .setTitle("Mouse için yeniden eşleştir")
+                .setMessage(R.string.mouse_repair_hint)
+                .setCancelable(false)
+                .setPositiveButton("Eşleştirmeyi aç") { _, _ ->
+                    PermissionHelper.openBluetoothSettings(this)
+                }
+                .setNeutralButton("Yeniden eşleştirdim") { _, _ ->
+                    prefs.edit()
+                        .putInt(
+                            "descriptor_acked",
+                            com.cihan.pcontroller.bluetooth.HidReports.DESCRIPTOR_VERSION
+                        )
+                        .apply()
+                    testMouseProbe()
+                }
+                .setNegativeButton("Şimdi dene") { _, _ ->
+                    testMouseProbe()
+                }
+                .show()
+        } else {
+            testMouseProbe()
+        }
+    }
+
+    private fun testMouseProbe() {
+        window.decorView.postDelayed({
+            val ok = hidService?.probeMouse() == true
+            if (ok) {
+                Toast.makeText(this, "Mouse raporu gitti — trackpad’i kaydır", Toast.LENGTH_SHORT)
+                    .show()
+            } else {
+                Toast.makeText(
+                    this,
+                    "Mouse gitmedi: Windows’ta telefonu kaldır → yeniden eşleştir",
+                    Toast.LENGTH_LONG
+                ).show()
+                showRepairDialog()
+            }
+        }, 400)
     }
 
     private fun disconnectAndReset() {
@@ -462,21 +641,33 @@ class MainActivity : AppCompatActivity() {
                 awaitingConnection = false
                 hideAllPanels()
                 val deviceLabel = connection.deviceName ?: connection.deviceAddress
-                if (state.activePlatformId == null) {
-                    platformSelectionContainer.visibility = View.VISIBLE
-                    setStatus(
-                        getString(R.string.status_connected, deviceLabel),
-                        connected = true
-                    )
-                } else {
-                    val profile = state.activeProfile ?: return
-                    inputContainer.visibility = View.VISIBLE
-                    applyRemoteLayout(profile)
-                    setStatus(
-                        getString(R.string.status_connected, deviceLabel) +
-                            " · " + getString(profile.titleRes),
-                        connected = true
-                    )
+                when {
+                    state.controlSurface == ControlSurface.Mouse -> {
+                        ensureServiceBound()
+                        mouseContainer.visibility = View.VISIBLE
+                        setStatus(
+                            getString(R.string.status_connected, deviceLabel) +
+                                " · " + getString(R.string.mouse_mode),
+                            connected = true
+                        )
+                    }
+                    state.activePlatformId == null -> {
+                        platformSelectionContainer.visibility = View.VISIBLE
+                        setStatus(
+                            getString(R.string.status_connected, deviceLabel),
+                            connected = true
+                        )
+                    }
+                    else -> {
+                        val profile = state.activeProfile ?: return
+                        inputContainer.visibility = View.VISIBLE
+                        applyRemoteLayout(profile)
+                        setStatus(
+                            getString(R.string.status_connected, deviceLabel) +
+                                " · " + getString(profile.titleRes),
+                            connected = true
+                        )
+                    }
                 }
             }
             is ConnectionState.Connecting, is ConnectionState.Starting -> {
@@ -485,6 +676,7 @@ class MainActivity : AppCompatActivity() {
                 connectionProgressBar.visibility = View.VISIBLE
                 retryButton.visibility = View.GONE
                 repairHintButton.visibility = View.GONE
+                cancelConnectButton.visibility = View.VISIBLE
                 setStatus(
                     getString(
                         if (connection is ConnectionState.Connecting) R.string.status_connecting
@@ -495,12 +687,14 @@ class MainActivity : AppCompatActivity() {
             }
             is ConnectionState.Failed -> {
                 awaitingConnection = false
+                syncingServiceState = false
                 hideAllPanels()
                 connectionContainer.visibility = View.VISIBLE
                 connectionProgressBar.visibility = View.GONE
                 retryButton.visibility = View.VISIBLE
                 repairHintButton.visibility =
                     if (state.showRepairHint) View.VISIBLE else View.GONE
+                cancelConnectButton.visibility = View.VISIBLE
                 setStatus(getString(R.string.status_error, connection.reason), connected = false)
             }
             is ConnectionState.Registered, is ConnectionState.Idle -> {
@@ -510,7 +704,17 @@ class MainActivity : AppCompatActivity() {
                     connectionProgressBar.visibility = View.VISIBLE
                     retryButton.visibility = View.GONE
                     repairHintButton.visibility = View.GONE
+                    cancelConnectButton.visibility = View.VISIBLE
                     setStatus(R.string.status_preparing, connected = false)
+                    // Registered olduysa connect tetiklenmemiş olabilir — bir kez daha dene
+                    val addr = state.selectedAddress
+                    window.decorView.postDelayed({
+                        if (awaitingConnection &&
+                            viewModel.uiState.value.connection is ConnectionState.Registered
+                        ) {
+                            hidService?.connect(addr)
+                        }
+                    }, 600)
                     return
                 }
                 if (syncingServiceState) {
@@ -522,6 +726,7 @@ class MainActivity : AppCompatActivity() {
                     setStatus(R.string.status_preparing, connected = false)
                     return
                 }
+                awaitingConnection = false
                 hideAllPanels()
                 deviceSelectionContainer.visibility = View.VISIBLE
                 setStatus(R.string.status_ready, connected = false)
@@ -552,6 +757,7 @@ class MainActivity : AppCompatActivity() {
         connectionContainer.visibility = View.GONE
         platformSelectionContainer.visibility = View.GONE
         inputContainer.visibility = View.GONE
+        mouseContainer.visibility = View.GONE
     }
 
     private fun showRepairDialog() {
