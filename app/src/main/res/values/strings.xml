@@ -1,62 +1,85 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">PController</string>
+    <string name="app_name">PC Controller</string>
+    <string name="store_title">PC Controller – Bluetooth Remote</string>
+    <string name="store_short_description">Bluetooth PC Remote — kumanda, mouse ve klavye</string>
     <string name="connect">Bağlan</string>
-    <string name="disconnect">Bağlantıyı Kes</string>
+    <string name="disconnect">Bağlantıyı kes</string>
     <string name="cancel">İptal</string>
-    <string name="retry">Tekrar Dene</string>
-    <string name="status_ready">Eşleşmiş PC seçin</string>
+    <string name="retry">Tekrar dene</string>
+    <string name="status_ready">Eşleşmiş bir PC seçin</string>
     <string name="status_connected">Bağlı: %1$s</string>
     <string name="status_connecting">Bağlanıyor…</string>
-    <string name="status_preparing">HID hazırlanıyor…</string>
-    <string name="status_error">Hata: %1$s</string>
-    <string name="notification_title">PController aktif</string>
+    <string name="status_preparing">Bağlantı hazırlanıyor…</string>
+    <string name="status_error">%1$s</string>
+    <string name="notification_title">PC Controller aktif</string>
     <string name="notification_text">Uygulama çalışıyor</string>
+    <string name="notification_idle">PC seçmek için dokunun</string>
     <string name="bluetooth_permission_required">Bluetooth izni gerekli</string>
 
-    <string name="enable_bluetooth">Bluetooth’u Aç</string>
-    <string name="grant_permission">İzin Ver</string>
-    <string name="open_app_settings">Ayarlara Git</string>
-    <string name="open_bluetooth_settings">Bluetooth ayarlarından eşleştir</string>
+    <string name="enable_bluetooth">Bluetooth’u aç</string>
+    <string name="grant_permission">İzin ver</string>
+    <string name="open_app_settings">Ayarlara git</string>
+    <string name="open_bluetooth_settings">Bluetooth ayarlarından eşleştirin</string>
     <string name="refresh_devices">Listeyi yenile</string>
-    <string name="bonded_devices_hint">Yalnızca sistemde eşleştirilmiş cihazlar listelenir. PC’nizi görmüyorsanız önce Bluetooth ayarlarından eşleştirin.</string>
-    <string name="no_bonded_devices">Eşleşmiş cihaz yok.\nWindows’ta Bluetooth → cihaz ekle ile telefonunuzu eşleştirin, sonra yenileyin.</string>
-    <string name="bt_off_message">PController’ın çalışması için Bluetooth’un açık olması gerekir.</string>
-    <string name="bt_permission_message">PController, eşleştirilmiş bilgisayarları görmek ve HID bağlantısı kurmak için Bluetooth iznine ihtiyaç duyar.</string>
+    <string name="bonded_devices_hint">Yalnızca telefonda eşleştirilmiş cihazlar listelenir. PC’nizi görmüyorsanız önce Bluetooth ayarlarından eşleştirin.</string>
+    <string name="no_bonded_devices">Eşleşmiş cihaz bulunamadı.\nWindows’ta Bluetooth → cihaz ekle ile telefonunuzu eşleştirin, ardından listeyi yenileyin.</string>
+    <string name="bt_off_message">PC Controller’ın çalışması için Bluetooth’un açık olması gerekir.</string>
+    <string name="bt_off_status">Bluetooth kapalı</string>
+    <string name="bt_permission_message">PC Controller, eşleştirilmiş bilgisayarları görmek ve bağlantı kurmak için Bluetooth iznine ihtiyaç duyar.</string>
     <string name="repair_pairing">Yeniden eşleştirme yardımı</string>
-    <string name="repair_dialog_title">Yeniden eşleştir</string>
-    <string name="repair_dialog_message">HID profili değişti (klavye + medya + mouse).\nWindows eski tanımı tutuyor olabilir.\n\n1) Windows’ta bu telefonu kaldırın\n2) Telefonda PC eşleşmesini silin\n3) Yeniden eşleştirin\n4) PController’da tekrar bağlanın</string>
+    <string name="repair_dialog_title">Yeniden eşleştirme</string>
+    <string name="repair_dialog_message">Bağlantı profili güncellenmiş olabilir. Windows eski tanımı tutuyorsa yeniden eşleştirme gerekir:\n\n1) Windows’ta bu telefonu kaldırın\n2) Telefonda PC eşleşmesini silin\n3) Yeniden eşleştirin\n4) PC Controller’da tekrar bağlanın</string>
     <string name="repair_open_settings">Bluetooth ayarlarını aç</string>
 
-    <string name="platform_pick_title">Mod seç</string>
-    <string name="platform_pick_hint">Kumanda = platform kısayolları. Mouse = trackpad. Klavye = HID QWERTY (PC düzeninle aynı olmalı).</string>
+    <string name="platform_pick_title">Mod seçin</string>
+    <string name="platform_pick_hint">Kumanda ücretsizdir. Mouse ve klavye Pro ile açılır.</string>
     <string name="platform_change">Modu değiştir</string>
     <string name="mouse_mode">Mouse / Trackpad</string>
     <string name="keyboard_mode">Klavye</string>
+    <string name="mouse_mode_locked">Mouse / Trackpad · Pro</string>
+    <string name="keyboard_mode_locked">Klavye · Pro</string>
+    <string name="pro_title">PC Controller Pro</string>
+    <string name="pro_message">Pro sürümünde Touchpad ve tam klavye açılır.</string>
+    <string name="pro_buy">Pro’ya geç</string>
+    <string name="pro_restore">Satın almayı geri yükle</string>
+    <string name="pro_unlock_soon">Test için Pro’yu aç</string>
+    <string name="pro_unlocked_toast">Pro açıldı. Mouse ve klavye kullanılabilir.</string>
+    <string name="pro_restore_ok">Satın alma bulundu. Pro açıldı.</string>
+    <string name="pro_restore_none">Bu Google hesabında Pro satın alması bulunamadı.</string>
+    <string name="pro_billing_unavailable">Play Billing şu an kullanılamıyor.</string>
+    <string name="pro_later">Daha sonra</string>
+    <string name="pro_badge">Pro</string>
+    <string name="pro_store_open_failed">Pro mağaza sayfası açılamadı.</string>
     <string name="remote_mode">Kumanda</string>
     <string name="platforms_section">Kumanda platformu</string>
     <string name="back_to_modes">Modlara dön</string>
     <string name="back_to_remote">Kumandaya dön</string>
     <string name="keyboard_layout">Düzen: %1$s</string>
-    <string name="keyboard_layout_hint">PC’de aynı klavye düzeni seçili olmalı. HID tuş gönderir; karakter üretmez.</string>
+    <string name="keyboard_layout_hint">En iyi sonuç için PC’de aynı klavye düzenini seçin.</string>
     <string name="keyboard_layout_cycle">Düzeni değiştir</string>
-    <string name="keyboard_trackpad_hint">Kaydır · dokun = sol · 2 parmak = sağ / scroll</string>
+    <string name="keyboard_trackpad_hint">Kaydırın · dokunun = sol tık · iki parmak = sağ tık / kaydırma</string>
     <string name="mouse_left_click">Sol tık</string>
     <string name="mouse_right_click">Sağ tık</string>
-    <string name="mouse_gesture_hint">Tek dokunuş = sol · İki parmak dokunuş = sağ · İki parmak kaydır = scroll</string>
-    <string name="mouse_repair_hint">Trackpad’in çalışması için Windows HID’i yenilemen şart:\n\n1) Windows → Bluetooth → bu telefonu Kaldır\n2) Telefonda PC eşleşmesini sil\n3) Yeniden eşleştir\n4) PController’da tekrar bağlan\n5) Mouse / Trackpad’i aç\n\nEşleştirmeden mouse gitmez (eski klavye profili kalır).</string>
+    <string name="mouse_gesture_hint">Tek dokunuş = sol tık · İki parmak dokunuş = sağ tık · İki parmak kaydır = kaydırma</string>
+    <string name="mouse_help_button">Sorun mu yaşıyorsunuz?</string>
+    <string name="mouse_help_title">Trackpad yardımı</string>
+    <string name="mouse_help_probe">Bağlantıyı test et</string>
+    <string name="mouse_probe_ok">Mouse sinyali gönderildi. Trackpad’i kaydırarak deneyin.</string>
+    <string name="mouse_probe_fail">Sinyal gönderilemedi. Aşağıdaki adımlarla yeniden eşleştirmeyi deneyin.</string>
+    <string name="mouse_repair_hint">Trackpad yanıt vermiyorsa Windows eski bağlantı profilini tutuyor olabilir:\n\n1) Windows → Bluetooth → bu telefonu kaldırın\n2) Telefonda PC eşleşmesini silin\n3) Yeniden eşleştirin\n4) PC Controller’da tekrar bağlanın\n5) Mouse / Trackpad’i açın\n\nÇoğu durumda ilk eşleştirmede çalışır; sorun sürerse bu adımları uygulayın.</string>
     <string name="platform_web">Web / Film</string>
-    <string name="platform_web_sub">HBO Max, tarayıcı, HTML5 oynatıcı — Space, oklar, Tam Ekran</string>
+    <string name="platform_web_sub">Tarayıcı ve HTML5 oynatıcılar — Space, oklar, tam ekran</string>
     <string name="platform_youtube">YouTube</string>
-    <string name="platform_youtube_sub">−10/Play/+10, oklarla ±5 sn, liste için Önceki/Sonraki</string>
+    <string name="platform_youtube_sub">−10 sn / Play / +10 sn, oklarla ±5 sn, liste için önceki/sonraki</string>
     <string name="platform_netflix">Netflix</string>
-    <string name="platform_netflix_sub">Tam ekran, OK, altyazı</string>
+    <string name="platform_netflix_sub">Tam ekran, OK, Play/Pause, ses</string>
     <string name="platform_spotify">Spotify</string>
-    <string name="platform_spotify_sub">Önceki / Play / Sonraki, ses, mute</string>
+    <string name="platform_spotify_sub">Önceki / Play / Sonraki, ses, sessiz</string>
     <string name="platform_presentation">Sunum</string>
     <string name="platform_presentation_sub">Başlat (F5), slayt okları, siyah ekran</string>
     <string name="platform_general">Genel / Tablet</string>
-    <string name="platform_general_sub">Her HID host: PC, tablet, TV — D-Pad, Space, Esc, Vol</string>
+    <string name="platform_general_sub">PC, tablet ve TV için temel yön ve medya tuşları</string>
 
     <string name="key_up">↑</string>
     <string name="key_down">↓</string>
@@ -65,12 +88,12 @@
     <string name="key_space">Space</string>
     <string name="key_esc">Esc</string>
     <string name="pair_short">Eşleştir</string>
-    <string name="setup_title">Baglanti kurulumu</string>
+    <string name="setup_title">Bağlantı kurulumu</string>
     <string name="key_play_symbol">Play</string>
     <string name="key_play_pause">Play/Pause</string>
-    <string name="key_fullscreen">Tam Ekran</string>
-    <string name="key_vol_down">V−</string>
-    <string name="key_vol_up">V+</string>
+    <string name="key_fullscreen">Tam ekran</string>
+    <string name="key_vol_down">Ses −</string>
+    <string name="key_vol_up">Ses +</string>
     <string name="key_ok">OK</string>
     <string name="key_prev">Önceki</string>
     <string name="key_next">Sonraki</string>
@@ -80,14 +103,20 @@
     <string name="key_seek_fwd_10">+10 sn</string>
     <string name="key_mute">Sessiz</string>
     <string name="key_subtitle">Altyazı</string>
+    <string name="key_audio_subtitle">Ses / Altyazı</string>
     <string name="key_start_presentation">Başlat</string>
     <string name="key_black_screen">Siyah ekran</string>
     <string name="key_next_slide">İleri</string>
 
-    <string name="contact_us">Bize yazın</string>
+    <string name="contact_us">Bize ulaşın</string>
     <string name="contact_email">systemtenis@gmail.com</string>
-    <string name="contact_hint">Öneri veya şikayet için yazın</string>
-    <string name="contact_mail_subject">PController öneri / şikayet</string>
-    <string name="contact_no_mail_app">E-posta uygulaması bulunamadı. Adres panoya kopyalandı: systemtenis@gmail.com</string>
-    <string name="contact_copied">E-posta panoya kopyalandı</string>
+    <string name="contact_hint">Öneri ve geri bildirim için bize yazabilirsiniz</string>
+    <string name="contact_mail_subject">PC Controller — öneri / geri bildirim</string>
+    <string name="contact_no_mail_app">E-posta uygulaması bulunamadı. Adres panoya kopyalandı.</string>
+    <string name="contact_copied">E-posta adresi panoya kopyalandı</string>
+
+    <string name="toast_bt_settings">Bluetooth ayarları açılıyor…</string>
+    <string name="toast_service_failed">Servis başlatılamadı. Lütfen tekrar deneyin.</string>
+    <string name="toast_connect_failed">Bağlantı başlatılamadı. Lütfen tekrar deneyin.</string>
+    <string name="toast_startup_issue">Açılışta bir sorun oluştu. Uygulamayı yeniden başlatmayı deneyin.</string>
 </resources>

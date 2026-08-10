@@ -1,4 +1,4 @@
-# PController — Production Roadmap (Play Store)
+# PC Controller — Production Roadmap (Play Store)
 
 > Kaynak: `ARCHITECTURE.md` + ChatGPT review + mevcut kod incelemesi.  
 > Durum: **Kararlar kilitlendi (aşağıda).** Kod refactor’a henüz girilmedi.  
@@ -34,14 +34,14 @@ ChatGPT’nin önerdiği sıra doğru. Refactor, bu dosyadaki **§1 kararlar** o
 | 7 | FGS tipi | **Önce `connectedDevice` dene**; olmazsa `specialUse` + Play beyanı hazırla | Play inceleme dostu tercih |
 | 8 | Tuş seti (geçici Sprint 2) | D-Pad, Space, Esc, **Tam Ekran=F**, Vol±, Play/Pause | Platform mapping Sprint 3 |
 | 9 | Bildirim kontrolleri | **Evet — zorunlu farklılaştırıcı**: ◀ ▶ ▲ ▼ (Play/Pause Sprint 3) | Kilit ekranı kullanımı |
-| 10 | Marka | **Display: PController** · Package: **`com.cihan.pcontroller`** | Onaylandı 2026-08-08 |
+| 10 | Marka | **Display: PC Controller** · Package: **`com.cihan.pccontroller`** | Onaylandı 2026-08-08 |
 | 11 | Test | Unit: report builder + state machine. HID API mock. Manuel: OEM matrisi | Instrumental tam HID pahalı |
 | 12 | minSdk | **28 kalsın** (HID API tabanı). target/compile **35’e yükselt** (Play hedef) | Kapsamı daraltma |
 | 13 | Dil | Uygulama **Türkçe öncelik**, store listing TR (+ sonra EN) | Mevcut kullanıcı dili |
 
 ### Onay durumu
 
-- [x] Package: `com.cihan.pcontroller`
+- [x] Package: `com.cihan.pccontroller`
 - [x] Brightness: çıkar
 - [x] Sprint 1: BAŞLATILDI / tamamlanma durumu aşağıda
 
@@ -161,7 +161,7 @@ Kod kurcalanmaz. Gerçek telefon + Windows’ta geçmeden Sprint 2’ye girilmez
 
 ```
 ┌─────────────────────────────┐
-│  PController                │
+│  PC Controller                │
 │  ● Bağlı · DESKTOP-PC   [✕] │  ← durum + kes
 ├─────────────────────────────┤
 │           [ ▲ ]             │
@@ -179,7 +179,7 @@ Kod kurcalanmaz. Gerçek telefon + Windows’ta geçmeden Sprint 2’ye girilmez
 
 Bildirim (bağlıyken ongoing):
 
-- Başlık: PController · `PC adı`
+- Başlık: PC Controller · `PC adı`
 - Actions: ◀  ▲  ▼  ▶  (ve mümkünse Play/Pause)
 
 ---
@@ -187,8 +187,8 @@ Bildirim (bağlıyken ongoing):
 ## 4. Hedef kod iskeleti (refactor sonrası)
 
 ```
-com.<package>.pcontroller/
-├── PControllerApp.kt
+com.<package>.pccontroller/
+├── PC ControllerApp.kt
 ├── ui/
 │   ├── MainActivity.kt
 │   └── RemoteViewModel.kt
@@ -302,7 +302,7 @@ Bunlar olmadan production’a basılmaz:
 
 Sen şunu yaz:
 
-1. Package name (ör. `com.cihan.pcontroller`)
+1. Package name (ör. `com.cihan.pccontroller`)
 2. Brightness: **çıkar** / **gizli menü**
 3. “Sprint 1’e başla” dersen → kod refactor başlar
 

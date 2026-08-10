@@ -1,4 +1,4 @@
-# PController — Mimari Brief & Üretim Planı
+# PC Controller — Mimari Brief & Üretim Planı
 
 > Amaç: Bu doküman mevcut sistemi, bilinen hataları ve “piyasaya sürülebilir” hedefi netleştirir.  
 > Diğer AI / review’lerden mimari, UX, Bluetooth HID ve Android lifecycle konusunda fikir toplamak için yazılmıştır.  
@@ -10,7 +10,7 @@
 
 | Alan | Değer |
 |------|--------|
-| **Ürün adı (geçici)** | PController / Bluetooth Keyboard |
+| **Ürün adı (geçici)** | PC Controller / Bluetooth Keyboard |
 | **Platform** | Android (minSdk 28 / Android 9+, targetSdk 34) |
 | **Dil** | Kotlin |
 | **UI** | XML + ViewBinding (açık ama kullanılmıyor; findViewById var) |
@@ -33,12 +33,12 @@
 ## 2. Mevcut Dosya Yapısı
 
 ```
-PController/
-└── PController/                          # Gradle root
+PC Controller/
+└── PC Controller/                          # Gradle root
     ├── README.md
     ├── ARCHITECTURE.md                   # Bu dosya
     ├── build.gradle.kts                  # AGP 8.5.1, Kotlin 1.9.20
-    ├── settings.gradle.kts               # rootProject.name = "BluetoothKeyboard"
+    ├── settings.gradle.kts               # rootProject.name = "PC Controller"
     ├── gradle.properties
     ├── app/
     │   ├── build.gradle.kts
@@ -304,7 +304,7 @@ Lütfen şu sorulara cevap verin (kısa, karar odaklı):
 ### Ürün / UX
 8. Minimal tuş seti nedir? (D-Pad + Space yeterli mi? Volume? Media play/pause? ESC?)
 9. Bildirimden kontrol şart mı, yoksa sadece uygulama içi mi?
-10. Marka adı: “PController” mı, “Bluetooth Keyboard” mı, başka mı?
+10. Marka adı: “PC Controller” mı, “Bluetooth Keyboard” mı, başka mı?
 
 ### Kalite
 11. Hangi testler otomatize edilmeli (unit vs instrumented)? HID’i nasıl mock’larız?

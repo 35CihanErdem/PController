@@ -597,7 +597,7 @@
             android:layout_height="44dp"
             android:text="@string/back_to_modes" />
 
-        <com.cihan.pcontroller.ui.TrackpadView
+        <com.cihan.pccontroller.ui.TrackpadView
             android:id="@+id/trackpadView"
             android:layout_width="match_parent"
             android:layout_height="0dp"
@@ -640,11 +640,19 @@
             android:textSize="12sp" />
 
         <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/mouseHelpButton"
+            style="@style/RemoteGhostButton"
+            android:layout_width="match_parent"
+            android:layout_height="44dp"
+            android:layout_marginTop="4dp"
+            android:text="@string/mouse_help_button" />
+
+        <androidx.appcompat.widget.AppCompatButton
             android:id="@+id/disconnectFromMouseButton"
             style="@style/RemoteGhostButton"
             android:layout_width="match_parent"
             android:layout_height="48dp"
-            android:layout_marginTop="8dp"
+            android:layout_marginTop="4dp"
             android:text="@string/disconnect" />
     </LinearLayout>
 
@@ -704,7 +712,7 @@
             android:layout_height="0dp"
             android:visibility="gone" />
 
-        <com.cihan.pcontroller.ui.TrackpadView
+        <com.cihan.pccontroller.ui.TrackpadView
             android:id="@+id/keyboardTrackpadView"
             android:layout_width="match_parent"
             android:layout_height="0dp"
@@ -739,7 +747,7 @@
                 android:textSize="13sp" />
         </LinearLayout>
 
-        <com.cihan.pcontroller.ui.KeyboardPanelView
+        <com.cihan.pccontroller.ui.KeyboardPanelView
             android:id="@+id/keyboardPanel"
             android:layout_width="match_parent"
             android:layout_height="0dp"

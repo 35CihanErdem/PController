@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">PC Controller</string>
+    <string name="store_title">PC Controller – Bluetooth Remote</string>
+    <string name="store_short_description">Bluetooth PC Remote — kumanda ve platform kontrolleri</string>
+    <string name="platform_pick_hint">Kumanda ücretsizdir. Mouse ve klavye için PC Controller Pro uygulamasını indirin.</string>
+    <string name="pro_title">PC Controller Pro</string>
+    <string name="pro_message">Ücretsiz sürümde kumanda, platformlar ve ses vardır.\n\nPro uygulamasında (ayrı indirme):\n• Touchpad — hareket, tıklama, kaydırma\n• Tam klavye — QWERTY, Ctrl / Alt / Shift\n\nPro sürümüne geçerek Touchpad ve klavyeyi açabilirsiniz.</string>
+    <string name="pro_buy">Pro sürümüne geç</string>
+    <string name="pro_store_open_failed">Pro mağaza sayfası açılamadı.</string>
+</resources>

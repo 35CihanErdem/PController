@@ -13,6 +13,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "PController"
+rootProject.name = "PCController"
 include(":app")
 

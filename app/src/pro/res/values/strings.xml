@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">PC Controller Pro</string>
+    <string name="store_title">PC Controller Pro – Bluetooth Remote</string>
+    <string name="store_short_description">Bluetooth PC Remote — kumanda, touchpad ve klavye</string>
+    <string name="notification_title">PC Controller Pro aktif</string>
+    <string name="platform_pick_hint">Kumanda her zaman açık. Mouse ve klavye için tek seferlik Pro satın alma gerekir.</string>
+    <string name="pro_title">Pro’yu aç</string>
+    <string name="pro_message">Bu uygulamada kumanda ücretsizdir.\n\nTek seferlik Pro:\n• Touchpad — hareket, tıklama, kaydırma\n• Tam klavye — QWERTY, Ctrl / Alt / Shift\n\nDaha önce satın aldıysanız “Satın almayı geri yükle”yi kullanın.</string>
+    <string name="pro_buy">Pro’yu satın al</string>
+    <string name="pro_restore">Satın almayı geri yükle</string>
+    <string name="pro_unlock_soon">Test için Pro’yu aç</string>
+    <string name="pro_unlocked_toast">Pro açıldı. Mouse ve klavye kullanılabilir.</string>
+    <string name="pro_restore_ok">Satın alma bulundu. Pro açıldı.</string>
+    <string name="pro_restore_none">Bu Google hesabında Pro satın alması bulunamadı.</string>
+    <string name="pro_billing_unavailable">Play Billing şu an kullanılamıyor. Play Console’da ürün tanımlı ve uygulama Play üzerinden yüklü olmalı.</string>
+</resources>
