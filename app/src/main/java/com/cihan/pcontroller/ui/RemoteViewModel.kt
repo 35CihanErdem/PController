@@ -24,10 +24,11 @@ enum class SetupPhase {
     Ready
 }
 
-/** Remote (platform tuşları) veya Mouse (trackpad) yüzeyi. */
+/** Remote (platform tuşları), Mouse (trackpad) veya Keyboard (QWERTY). */
 enum class ControlSurface {
     Remote,
-    Mouse
+    Mouse,
+    Keyboard
 }
 
 data class RemoteUiState(
@@ -166,7 +167,16 @@ class RemoteViewModel(application: Application) : AndroidViewModel(application) 
         _uiState.update {
             it.copy(
                 controlSurface = ControlSurface.Mouse,
-                // Mouse için platform şart değil; dönüşte seçim ekranı için null tut
+                activePlatformId = it.activePlatformId
+            )
+        }
+    }
+
+    /** Platform seçmeden doğrudan HID klavye. */
+    fun selectKeyboardMode() {
+        _uiState.update {
+            it.copy(
+                controlSurface = ControlSurface.Keyboard,
                 activePlatformId = it.activePlatformId
             )
         }
@@ -176,11 +186,14 @@ class RemoteViewModel(application: Application) : AndroidViewModel(application) 
         _uiState.update { it.copy(controlSurface = ControlSurface.Remote) }
     }
 
-    fun clearPlatformSelection() {
+    /** Mod seçim ekranına dön (Kumanda / Mouse / Klavye). */
+    fun backToModePick() {
         _uiState.update {
             it.copy(activePlatformId = null, controlSurface = ControlSurface.Remote)
         }
     }
+
+    fun clearPlatformSelection() = backToModePick()
 
     fun clearSelection() {
         _uiState.update {

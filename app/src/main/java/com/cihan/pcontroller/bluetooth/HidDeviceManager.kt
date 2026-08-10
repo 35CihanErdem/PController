@@ -281,7 +281,13 @@ class HidDeviceManager(
 
     fun sendKey(keyCode: KeyCode, modifiers: Int = 0) {
         if (keyCode == KeyCode.NONE) return
-        sendKeyboardPulse(keyCode, modifiers)
+        sendKeyboardPulse(keyCode.usage, modifiers)
+    }
+
+    /** Ham HID usage — QWERTY paneli. */
+    fun sendKeyUsage(usage: Int, modifiers: Int = 0) {
+        if (usage == 0) return
+        sendKeyboardPulse(usage, modifiers)
     }
 
     fun sendVolumeUp() = sendConsumerPulse(ConsumerAction.VOLUME_UP)
@@ -706,7 +712,7 @@ class HidDeviceManager(
         }
     }
 
-    private fun sendKeyboardPulse(keyCode: KeyCode, modifiers: Int = 0) {
+    private fun sendKeyboardPulse(usage: Int, modifiers: Int = 0) {
         val hid = hidDevice
         val target = connectedDevice
         if (hid == null || target == null || !hasConnectPermission()) return
@@ -716,12 +722,12 @@ class HidDeviceManager(
         keyReleaseRunnable = null
 
         try {
-            // Modifier varsa önce Shift basılı (Windows/YouTube daha güvenilir)
+            // Modifier varsa önce Shift/Ctrl/Alt basılı (Windows daha güvenilir)
             if (modifiers != 0) {
                 hid.sendReport(
                     target,
                     HidReports.REPORT_ID_KEYBOARD,
-                    HidReports.keyboardReport(KeyCode.NONE, modifiers)
+                    HidReports.keyboardReportUsage(0, modifiers)
                 )
                 mainHandler.postDelayed({
                     if (connectedDevice != target || !hasConnectPermission()) return@postDelayed
@@ -729,7 +735,7 @@ class HidDeviceManager(
                         hid.sendReport(
                             target,
                             HidReports.REPORT_ID_KEYBOARD,
-                            HidReports.keyboardReport(keyCode, modifiers)
+                            HidReports.keyboardReportUsage(usage, modifiers)
                         )
                         scheduleKeyRelease(hid, target)
                     } catch (e: Exception) {
@@ -740,7 +746,7 @@ class HidDeviceManager(
                 hid.sendReport(
                     target,
                     HidReports.REPORT_ID_KEYBOARD,
-                    HidReports.keyboardReport(keyCode, 0)
+                    HidReports.keyboardReportUsage(usage, 0)
                 )
                 scheduleKeyRelease(hid, target)
             }
@@ -756,7 +762,7 @@ class HidDeviceManager(
                     hid.sendReport(
                         target,
                         HidReports.REPORT_ID_KEYBOARD,
-                        HidReports.keyboardReport(KeyCode.NONE)
+                        HidReports.keyboardReportUsage(0)
                     )
                 }
             } catch (e: Exception) {

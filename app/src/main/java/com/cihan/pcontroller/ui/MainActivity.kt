@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.ServiceConnection
+import android.net.Uri
 import android.bluetooth.BluetoothAdapter
 import android.os.Build
 import android.os.Bundle
@@ -30,6 +31,8 @@ import androidx.recyclerview.widget.RecyclerView
 import com.cihan.pcontroller.R
 import com.cihan.pcontroller.bluetooth.BondedDevice
 import com.cihan.pcontroller.bluetooth.ConnectionState
+import com.cihan.pcontroller.domain.KeyboardLayoutId
+import com.cihan.pcontroller.domain.KeyboardLayouts
 import com.cihan.pcontroller.domain.PlatformProfile
 import com.cihan.pcontroller.domain.RemoteAction
 import com.cihan.pcontroller.domain.RemoteButtonSpec
@@ -55,6 +58,10 @@ class MainActivity : AppCompatActivity() {
     private lateinit var requestPermissionButton: Button
     private lateinit var openAppSettingsButton: Button
 
+    private lateinit var contactUsButton: Button
+    private lateinit var contactEmailText: TextView
+    private lateinit var contactFooter: LinearLayout
+
     private lateinit var deviceSelectionContainer: LinearLayout
     private lateinit var refreshDevicesButton: Button
     private lateinit var openBluetoothSettingsButton: Button
@@ -70,11 +77,13 @@ class MainActivity : AppCompatActivity() {
     private lateinit var platformSelectionContainer: LinearLayout
     private lateinit var platformListRecyclerView: RecyclerView
     private lateinit var openMouseFromPickButton: Button
+    private lateinit var openKeyboardFromPickButton: Button
     private lateinit var disconnectFromPlatformButton: Button
 
     private lateinit var inputContainer: ScrollView
     private lateinit var changePlatformButton: Button
     private lateinit var openMouseButton: Button
+    private lateinit var openKeyboardButton: Button
     private lateinit var topPrimaryButton: Button
     private lateinit var mediaRow: LinearLayout
     private lateinit var mediaPrevButton: Button
@@ -101,6 +110,16 @@ class MainActivity : AppCompatActivity() {
     private lateinit var mouseRightButton: Button
     private lateinit var backToRemoteButton: Button
     private lateinit var disconnectFromMouseButton: Button
+
+    private lateinit var keyboardContainer: LinearLayout
+    private lateinit var keyboardPanel: KeyboardPanelView
+    private lateinit var keyboardTrackpadView: TrackpadView
+    private lateinit var keyboardMouseLeftButton: Button
+    private lateinit var keyboardMouseRightButton: Button
+    private lateinit var keyboardLayoutLabel: TextView
+    private lateinit var cycleKeyboardLayoutButton: Button
+    private lateinit var backFromKeyboardButton: Button
+    private lateinit var disconnectFromKeyboardButton: Button
 
     private var hidService: BluetoothHidService? = null
     private var bound = false
@@ -264,6 +283,9 @@ class MainActivity : AppCompatActivity() {
     private fun bindViews() {
         statusDot = findViewById(R.id.statusDot)
         statusText = findViewById(R.id.statusText)
+        contactUsButton = findViewById(R.id.contactUsButton)
+        contactEmailText = findViewById(R.id.contactEmailText)
+        contactFooter = findViewById(R.id.contactFooter)
         setupContainer = findViewById(R.id.setupContainer)
         setupMessage = findViewById(R.id.setupMessage)
         enableBluetoothButton = findViewById(R.id.enableBluetoothButton)
@@ -285,11 +307,13 @@ class MainActivity : AppCompatActivity() {
         platformSelectionContainer = findViewById(R.id.platformSelectionContainer)
         platformListRecyclerView = findViewById(R.id.platformListRecyclerView)
         openMouseFromPickButton = findViewById(R.id.openMouseFromPickButton)
+        openKeyboardFromPickButton = findViewById(R.id.openKeyboardFromPickButton)
         disconnectFromPlatformButton = findViewById(R.id.disconnectFromPlatformButton)
 
         inputContainer = findViewById(R.id.inputContainer)
         changePlatformButton = findViewById(R.id.changePlatformButton)
         openMouseButton = findViewById(R.id.openMouseButton)
+        openKeyboardButton = findViewById(R.id.openKeyboardButton)
         topPrimaryButton = findViewById(R.id.topPrimaryButton)
         mediaRow = findViewById(R.id.mediaRow)
         mediaPrevButton = findViewById(R.id.mediaPrevButton)
@@ -316,6 +340,16 @@ class MainActivity : AppCompatActivity() {
         mouseRightButton = findViewById(R.id.mouseRightButton)
         backToRemoteButton = findViewById(R.id.backToRemoteButton)
         disconnectFromMouseButton = findViewById(R.id.disconnectFromMouseButton)
+
+        keyboardContainer = findViewById(R.id.keyboardContainer)
+        keyboardPanel = findViewById(R.id.keyboardPanel)
+        keyboardTrackpadView = findViewById(R.id.keyboardTrackpadView)
+        keyboardMouseLeftButton = findViewById(R.id.keyboardMouseLeftButton)
+        keyboardMouseRightButton = findViewById(R.id.keyboardMouseRightButton)
+        keyboardLayoutLabel = findViewById(R.id.keyboardLayoutLabel)
+        cycleKeyboardLayoutButton = findViewById(R.id.cycleKeyboardLayoutButton)
+        backFromKeyboardButton = findViewById(R.id.backFromKeyboardButton)
+        disconnectFromKeyboardButton = findViewById(R.id.disconnectFromKeyboardButton)
     }
 
     private fun setupListeners() {
@@ -341,6 +375,9 @@ class MainActivity : AppCompatActivity() {
             permissionLauncher.launch(PermissionHelper.requiredRuntimePermissions())
         }
         openAppSettingsButton.setOnClickListener { PermissionHelper.openAppSettings(this) }
+        contactUsButton.setOnClickListener { openContactEmail() }
+        contactFooter.setOnClickListener { openContactEmail() }
+        contactEmailText.setOnClickListener { openContactEmail() }
         refreshDevicesButton.setOnClickListener { viewModel.refreshSetup() }
         openBluetoothSettingsButton.setOnClickListener {
             PermissionHelper.openBluetoothSettings(this)
@@ -355,16 +392,25 @@ class MainActivity : AppCompatActivity() {
         changePlatformButton.setOnClickListener { viewModel.clearPlatformSelection() }
         openMouseButton.setOnClickListener { openMouseMode() }
         openMouseFromPickButton.setOnClickListener { openMouseMode() }
-        backToRemoteButton.setOnClickListener {
-            if (viewModel.uiState.value.activePlatformId != null) {
-                viewModel.showRemoteSurface()
-            } else {
-                viewModel.clearPlatformSelection()
-            }
-        }
+        openKeyboardButton.setOnClickListener { openKeyboardMode() }
+        openKeyboardFromPickButton.setOnClickListener { openKeyboardMode() }
+        backToRemoteButton.setOnClickListener { viewModel.backToModePick() }
         disconnectFromMouseButton.setOnClickListener { disconnectAndReset() }
+        backFromKeyboardButton.setOnClickListener { viewModel.backToModePick() }
+        disconnectFromKeyboardButton.setOnClickListener { disconnectAndReset() }
+        cycleKeyboardLayoutButton.setOnClickListener { cycleKeyboardLayout() }
 
-        trackpadView.listener = object : TrackpadView.Listener {
+        keyboardPanel.listener = KeyboardPanelView.Listener { usage, modifiers ->
+            val svc = hidService
+            if (svc == null) {
+                ensureServiceBound()
+                return@Listener
+            }
+            svc.sendKeyUsage(usage, modifiers)
+        }
+        restoreKeyboardLayout()
+
+        val trackpadListener = object : TrackpadView.Listener {
             override fun onMove(dx: Int, dy: Int) {
                 val svc = hidService
                 if (svc == null) {
@@ -386,31 +432,45 @@ class MainActivity : AppCompatActivity() {
                 hidService?.mouseRightClick() ?: ensureServiceBound()
             }
         }
-        mouseLeftButton.setOnTouchListener { _, event ->
+        trackpadView.listener = trackpadListener
+        keyboardTrackpadView.listener = trackpadListener
+
+        bindMouseHoldButton(mouseLeftButton, left = true)
+        bindMouseHoldButton(mouseRightButton, left = false)
+        bindMouseHoldButton(keyboardMouseLeftButton, left = true)
+        bindMouseHoldButton(keyboardMouseRightButton, left = false)
+    }
+
+    private fun bindMouseHoldButton(button: Button, left: Boolean) {
+        button.setOnTouchListener { _, event ->
             when (event.actionMasked) {
                 android.view.MotionEvent.ACTION_DOWN -> {
-                    hidService?.mouseLeftDown()
+                    if (left) hidService?.mouseLeftDown() else hidService?.mouseRightDown()
                     true
                 }
                 android.view.MotionEvent.ACTION_UP, android.view.MotionEvent.ACTION_CANCEL -> {
-                    hidService?.mouseLeftUp()
+                    if (left) hidService?.mouseLeftUp() else hidService?.mouseRightUp()
                     true
                 }
                 else -> false
             }
         }
-        mouseRightButton.setOnTouchListener { _, event ->
-            when (event.actionMasked) {
-                android.view.MotionEvent.ACTION_DOWN -> {
-                    hidService?.mouseRightDown()
-                    true
-                }
-                android.view.MotionEvent.ACTION_UP, android.view.MotionEvent.ACTION_CANCEL -> {
-                    hidService?.mouseRightUp()
-                    true
-                }
-                else -> false
-            }
+    }
+
+    private fun openContactEmail() {
+        val email = getString(R.string.contact_email)
+        val subject = Uri.encode(getString(R.string.contact_mail_subject))
+        val intent = Intent(
+            Intent.ACTION_SENDTO,
+            Uri.parse("mailto:$email?subject=$subject")
+        )
+        try {
+            startActivity(Intent.createChooser(intent, getString(R.string.contact_us)))
+        } catch (_: Exception) {
+            val clipboard =
+                getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
+            clipboard.setPrimaryClip(android.content.ClipData.newPlainText("email", email))
+            Toast.makeText(this, R.string.contact_no_mail_app, Toast.LENGTH_LONG).show()
         }
     }
 
@@ -444,6 +504,43 @@ class MainActivity : AppCompatActivity() {
         } else {
             testMouseProbe()
         }
+    }
+
+    private fun openKeyboardMode() {
+        ensureServiceBound()
+        viewModel.selectKeyboardMode()
+        refreshKeyboardLayoutLabel()
+    }
+
+    private fun keyboardPrefs() =
+        getSharedPreferences("pcontroller_keyboard", MODE_PRIVATE)
+
+    private fun restoreKeyboardLayout() {
+        val name = keyboardPrefs().getString("layout", KeyboardLayoutId.TR_Q.name)
+            ?: KeyboardLayoutId.TR_Q.name
+        val id = runCatching { KeyboardLayoutId.valueOf(name) }.getOrDefault(KeyboardLayoutId.TR_Q)
+        keyboardPanel.setLayout(id)
+        refreshKeyboardLayoutLabel()
+    }
+
+    private fun cycleKeyboardLayout() {
+        val next = when (keyboardPanel.currentLayout()) {
+            KeyboardLayoutId.TR_Q -> KeyboardLayoutId.US
+            KeyboardLayoutId.US -> KeyboardLayoutId.TR_Q
+        }
+        keyboardPanel.setLayout(next)
+        keyboardPrefs().edit().putString("layout", next.name).apply()
+        refreshKeyboardLayoutLabel()
+        Toast.makeText(
+            this,
+            getString(R.string.keyboard_layout, KeyboardLayouts.title(next)),
+            Toast.LENGTH_SHORT
+        ).show()
+    }
+
+    private fun refreshKeyboardLayoutLabel() {
+        if (!::cycleKeyboardLayoutButton.isInitialized) return
+        cycleKeyboardLayoutButton.text = KeyboardLayouts.title(keyboardPanel.currentLayout())
     }
 
     private fun testMouseProbe() {
@@ -651,6 +748,16 @@ class MainActivity : AppCompatActivity() {
                             connected = true
                         )
                     }
+                    state.controlSurface == ControlSurface.Keyboard -> {
+                        ensureServiceBound()
+                        keyboardContainer.visibility = View.VISIBLE
+                        refreshKeyboardLayoutLabel()
+                        setStatus(
+                            getString(R.string.status_connected, deviceLabel) +
+                                " · " + getString(R.string.keyboard_mode),
+                            connected = true
+                        )
+                    }
                     state.activePlatformId == null -> {
                         platformSelectionContainer.visibility = View.VISIBLE
                         setStatus(
@@ -758,6 +865,7 @@ class MainActivity : AppCompatActivity() {
         platformSelectionContainer.visibility = View.GONE
         inputContainer.visibility = View.GONE
         mouseContainer.visibility = View.GONE
+        keyboardContainer.visibility = View.GONE
     }
 
     private fun showRepairDialog() {

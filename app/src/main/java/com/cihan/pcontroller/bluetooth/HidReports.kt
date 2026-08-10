@@ -20,7 +20,10 @@ object HidReports {
     const val USAGE_SCAN_NEXT = 0x00B5
     const val USAGE_SCAN_PREVIOUS = 0x00B6
     const val USAGE_MUTE = 0x00E2
+    const val MOD_LEFT_CTRL = 0x01
     const val MOD_LEFT_SHIFT = 0x02
+    const val MOD_LEFT_ALT = 0x04
+    const val MOD_LEFT_GUI = 0x08
 
     /** Descriptor sürümü — değişince Windows unpair şart */
     const val DESCRIPTOR_VERSION = 3
@@ -111,30 +114,14 @@ object HidReports {
         0xc0.toByte()
     )
 
-    fun keyboardReport(keyCode: KeyCode, modifiers: Int = 0): ByteArray {
+    fun keyboardReport(keyCode: KeyCode, modifiers: Int = 0): ByteArray =
+        keyboardReportUsage(keyCode.usage, modifiers)
+
+    /** Ham HID usage (klavye paneli için). */
+    fun keyboardReportUsage(usage: Int, modifiers: Int = 0): ByteArray {
         val report = ByteArray(8)
-        report[0] = modifiers.toByte()
-        report[2] = when (keyCode) {
-            KeyCode.UP_ARROW -> 0x52.toByte()
-            KeyCode.DOWN_ARROW -> 0x51.toByte()
-            KeyCode.LEFT_ARROW -> 0x50.toByte()
-            KeyCode.RIGHT_ARROW -> 0x4F.toByte()
-            KeyCode.SPACE -> 0x2C.toByte()
-            KeyCode.ESC -> 0x29.toByte()
-            KeyCode.ENTER -> 0x28.toByte()
-            KeyCode.F -> 0x09.toByte()
-            KeyCode.F5 -> 0x3E.toByte()
-            KeyCode.F11 -> 0x44.toByte()
-            KeyCode.B -> 0x05.toByte()
-            KeyCode.C -> 0x06.toByte()
-            KeyCode.J -> 0x0D.toByte()
-            KeyCode.K -> 0x0E.toByte()
-            KeyCode.L -> 0x0F.toByte()
-            KeyCode.M -> 0x10.toByte()
-            KeyCode.N -> 0x11.toByte()
-            KeyCode.P -> 0x13.toByte()
-            KeyCode.NONE -> 0x00
-        }
+        report[0] = (modifiers and 0xFF).toByte()
+        report[2] = (usage and 0xFF).toByte()
         return report
     }
 

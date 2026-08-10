@@ -28,11 +28,19 @@
     <string name="repair_dialog_message">HID profili değişti (klavye + medya + mouse).\nWindows eski tanımı tutuyor olabilir.\n\n1) Windows’ta bu telefonu kaldırın\n2) Telefonda PC eşleşmesini silin\n3) Yeniden eşleştirin\n4) PController’da tekrar bağlanın</string>
     <string name="repair_open_settings">Bluetooth ayarlarını aç</string>
 
-    <string name="platform_pick_title">Kumanda modu seç</string>
-    <string name="platform_pick_hint">Mouse her yerde çalışır. Platform tuşları YouTube / Netflix vb. için kısayol setidir.</string>
+    <string name="platform_pick_title">Mod seç</string>
+    <string name="platform_pick_hint">Kumanda = platform kısayolları. Mouse = trackpad. Klavye = HID QWERTY (PC düzeninle aynı olmalı).</string>
     <string name="platform_change">Modu değiştir</string>
     <string name="mouse_mode">Mouse / Trackpad</string>
+    <string name="keyboard_mode">Klavye</string>
+    <string name="remote_mode">Kumanda</string>
+    <string name="platforms_section">Kumanda platformu</string>
+    <string name="back_to_modes">Modlara dön</string>
     <string name="back_to_remote">Kumandaya dön</string>
+    <string name="keyboard_layout">Düzen: %1$s</string>
+    <string name="keyboard_layout_hint">PC’de aynı klavye düzeni seçili olmalı. HID tuş gönderir; karakter üretmez.</string>
+    <string name="keyboard_layout_cycle">Düzeni değiştir</string>
+    <string name="keyboard_trackpad_hint">Kaydır · dokun = sol · 2 parmak = sağ / scroll</string>
     <string name="mouse_left_click">Sol tık</string>
     <string name="mouse_right_click">Sağ tık</string>
     <string name="mouse_gesture_hint">Tek dokunuş = sol · İki parmak dokunuş = sağ · İki parmak kaydır = scroll</string>
@@ -75,4 +83,11 @@
     <string name="key_start_presentation">Başlat</string>
     <string name="key_black_screen">Siyah ekran</string>
     <string name="key_next_slide">İleri</string>
+
+    <string name="contact_us">Bize yazın</string>
+    <string name="contact_email">systemtenis@gmail.com</string>
+    <string name="contact_hint">Öneri veya şikayet için yazın</string>
+    <string name="contact_mail_subject">PController öneri / şikayet</string>
+    <string name="contact_no_mail_app">E-posta uygulaması bulunamadı. Adres panoya kopyalandı: systemtenis@gmail.com</string>
+    <string name="contact_copied">E-posta panoya kopyalandı</string>
 </resources>

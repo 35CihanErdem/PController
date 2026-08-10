@@ -104,6 +104,9 @@ class BluetoothHidService : LifecycleService() {
 
     fun probeMouse() = hidManager?.probeMouse() ?: false
 
+    fun sendKeyUsage(usage: Int, modifiers: Int = 0) =
+        hidManager?.sendKeyUsage(usage, modifiers)
+
     override fun onCreate() {
         super.onCreate()
         try {

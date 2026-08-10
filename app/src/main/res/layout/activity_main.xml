@@ -7,18 +7,40 @@
     android:background="@drawable/bg_app"
     tools:context=".ui.MainActivity">
 
-    <TextView
-        android:id="@+id/brandText"
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:id="@+id/brandRow"
+        android:layout_width="0dp"
         android:layout_height="wrap_content"
         android:layout_marginStart="20dp"
         android:layout_marginTop="18dp"
-        android:text="@string/app_name"
-        android:textColor="@color/text_primary"
-        android:textSize="22sp"
-        android:textStyle="bold"
+        android:layout_marginEnd="12dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent">
+
+        <TextView
+            android:id="@+id/brandText"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="@string/app_name"
+            android:textColor="@color/text_primary"
+            android:textSize="22sp"
+            android:textStyle="bold" />
+
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/contactUsButton"
+            style="@style/RemoteGhostButton"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:minWidth="0dp"
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp"
+            android:text="@string/contact_us"
+            android:textSize="13sp" />
+    </LinearLayout>
 
     <LinearLayout
         android:id="@+id/statusChip"
@@ -36,7 +58,7 @@
         android:paddingBottom="10dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/brandText">
+        app:layout_constraintTop_toBottomOf="@id/brandRow">
 
         <View
             android:id="@+id/statusDot"
@@ -189,6 +211,34 @@
             android:layout_marginTop="14dp"
             android:layout_weight="1"
             android:clipToPadding="false" />
+
+        <LinearLayout
+            android:id="@+id/contactFooter"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/bg_panel"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:padding="14dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/contact_hint"
+                android:textColor="@color/text_secondary"
+                android:textSize="12sp" />
+
+            <TextView
+                android:id="@+id/contactEmailText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:text="@string/contact_email"
+                android:textColor="@color/accent"
+                android:textSize="14sp"
+                android:textStyle="bold" />
+        </LinearLayout>
     </LinearLayout>
 
     <LinearLayout
@@ -279,11 +329,28 @@
             android:layout_marginTop="14dp"
             android:text="@string/mouse_mode" />
 
+        <androidx.appcompat.widget.AppCompatButton
+            android:id="@+id/openKeyboardFromPickButton"
+            style="@style/RemotePrimaryKey"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:layout_marginTop="8dp"
+            android:text="@string/keyboard_mode" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="@string/platforms_section"
+            android:textColor="@color/text_primary"
+            android:textSize="15sp"
+            android:textStyle="bold" />
+
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/platformListRecyclerView"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_marginTop="12dp"
+            android:layout_marginTop="8dp"
             android:layout_weight="1"
             android:clipToPadding="false" />
 
@@ -490,6 +557,14 @@
                 android:text="@string/mouse_mode" />
 
             <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/openKeyboardButton"
+                style="@style/RemotePrimaryKey"
+                android:layout_width="match_parent"
+                android:layout_height="56dp"
+                android:layout_marginTop="8dp"
+                android:text="@string/keyboard_mode" />
+
+            <androidx.appcompat.widget.AppCompatButton
                 android:id="@+id/disconnectButton"
                 style="@style/RemoteGhostButton"
                 android:layout_width="match_parent"
@@ -520,7 +595,7 @@
             style="@style/RemoteGhostButton"
             android:layout_width="match_parent"
             android:layout_height="44dp"
-            android:text="@string/back_to_remote" />
+            android:text="@string/back_to_modes" />
 
         <com.cihan.pcontroller.ui.TrackpadView
             android:id="@+id/trackpadView"
@@ -571,6 +646,106 @@
             android:layout_height="48dp"
             android:layout_marginTop="8dp"
             android:text="@string/disconnect" />
+    </LinearLayout>
+
+    <!-- HID Klavye yüzeyi -->
+    <LinearLayout
+        android:id="@+id/keyboardContainer"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:orientation="vertical"
+        android:paddingLeft="8dp"
+        android:paddingTop="4dp"
+        android:paddingRight="8dp"
+        android:paddingBottom="6dp"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/statusChip">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/backFromKeyboardButton"
+                style="@style/RemoteGhostButton"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:minWidth="0dp"
+                android:text="@string/back_to_modes"
+                android:textSize="13sp" />
+
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/cycleKeyboardLayoutButton"
+                style="@style/RemoteGhostButton"
+                android:layout_width="0dp"
+                android:layout_height="40dp"
+                android:layout_weight="1"
+                android:textSize="13sp" />
+
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/disconnectFromKeyboardButton"
+                style="@style/RemoteGhostButton"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:minWidth="0dp"
+                android:text="@string/disconnect"
+                android:textSize="13sp" />
+        </LinearLayout>
+
+        <!-- layout label gizli tutulur; cycle butonu başlığı gösterir -->
+        <TextView
+            android:id="@+id/keyboardLayoutLabel"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:visibility="gone" />
+
+        <com.cihan.pcontroller.ui.TrackpadView
+            android:id="@+id/keyboardTrackpadView"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginTop="4dp"
+            android:layout_weight="0.55"
+            android:minHeight="100dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:orientation="horizontal">
+
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/keyboardMouseLeftButton"
+                style="@style/RemoteActionKey"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_marginEnd="4dp"
+                android:layout_weight="1"
+                android:text="@string/mouse_left_click"
+                android:textSize="13sp" />
+
+            <androidx.appcompat.widget.AppCompatButton
+                android:id="@+id/keyboardMouseRightButton"
+                style="@style/RemoteActionKey"
+                android:layout_width="0dp"
+                android:layout_height="48dp"
+                android:layout_marginStart="4dp"
+                android:layout_weight="1"
+                android:text="@string/mouse_right_click"
+                android:textSize="13sp" />
+        </LinearLayout>
+
+        <com.cihan.pcontroller.ui.KeyboardPanelView
+            android:id="@+id/keyboardPanel"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginTop="6dp"
+            android:layout_weight="1.2"
+            android:gravity="bottom" />
     </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>
